@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { categories } from '../constants';
+import { api } from '../services/api';
 import type { Business } from '../types';
 import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { GlassCard } from './GlassCard';
-import { getBusinessName } from '../src/lib/utils';
-import { getVerifiedBusinesses } from '../src/lib/supabase';
 
 interface BusinessCardProps {
   business: Business;
@@ -13,8 +12,11 @@ interface BusinessCardProps {
 }
 
 const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
-  const { t } = useTranslations();
-  const displayName = getBusinessName(business.name);
+  const { t, lang } = useTranslations();
+  
+  const displayName = lang === 'ar' && business.nameAr ? business.nameAr : 
+                      lang === 'ku' && business.nameKu ? business.nameKu : 
+                      business.name;
                       
   const displayImage = business.imageUrl || business.image || business.coverImage || 'https://picsum.photos/seed/placeholder/400/300';
   const displayReviews = business.reviewCount ?? business.reviews ?? 0;
@@ -25,7 +27,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
       <GlassCard className="p-4 flex gap-4 text-start rtl:text-right">
         <img src={displayImage} alt={displayName} className="w-24 h-24 rounded-xl object-cover flex-shrink-0" />
         <div className="flex-1">
-          <h3 className="text-white font-semibold text-lg mb-1 business-name">{displayName}</h3>
+          <h3 className="text-white font-semibold text-lg mb-1">{displayName}</h3>
           <p className="text-white/60 text-sm mb-2">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white">{business.rating}</span></div>
@@ -47,7 +49,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
         {isVerified && <div className="absolute top-3 end-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center"><CheckCircle className="w-5 h-5 text-dark-bg" /></div>}
       </div>
       <div className="p-5">
-        <h3 className="text-white font-semibold text-lg mb-2 business-name">{displayName}</h3>
+        <h3 className="text-white font-semibold text-lg mb-2">{displayName}</h3>
         <p className="text-white/60 text-sm mb-3">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white font-medium">{business.rating}</span><span className="text-white/60 text-sm">({displayReviews})</span></div>
@@ -65,61 +67,46 @@ interface BusinessDirectoryProps {
 }
 
 export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFilter, onBack }) => {
-  const [filters, setFilters] = useState({ category: initialFilter?.categoryId || 'all', rating: 0 });
+  const [filters, setFilters] = useState({ 
+    category: initialFilter?.categoryId || 'all', 
+    rating: 0,
+    city: ''
+  });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [directoryBusinesses, setDirectoryBusinesses] = useState<Business[]>([]);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+  const [pageSize] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [businessesData, setBusinessesData] = useState<Business[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
   const { t } = useTranslations();
 
   useEffect(() => {
     setFilters(prev => ({...prev, category: initialFilter?.categoryId || 'all'}));
+    setCurrentPage(1);
   }, [initialFilter]);
 
   useEffect(() => {
     const fetchBusinesses = async () => {
-      setIsLoading(true);
-      setFetchError(null);
-
-      const { data, error } = await getVerifiedBusinesses({ page, pageSize: 50 });
-
-      if (error || !data) {
-        console.error('Failed to fetch businesses:', error);
-        setFetchError(error?.message || 'Failed to load businesses from Supabase.');
-        setIsLoading(false);
-        return;
-      }
-
-      const normalizedBusinesses: Business[] = data.map((business) => ({
-        id: business.id,
-        name: business.name,
-        category: business.category || 'business_services',
-        rating: 5,
-        city: business.city ?? undefined,
-        governorate: business.governorate ?? undefined,
-        address: business.address ?? undefined,
-        phone: business.phone ?? undefined,
-        verified: business.verified ?? undefined,
-        imageUrl: business.postcard?.image_url || business.location?.image_url || undefined,
-      }));
-
-      setDirectoryBusinesses((prev) => (page === 0 ? normalizedBusinesses : [...prev, ...normalizedBusinesses]));
-      setHasMore(data.length === 50);
-      setIsLoading(false);
+        setIsLoading(true);
+        try {
+            const result = await api.getBusinesses({
+                category: filters.category,
+                city: filters.city,
+                page: currentPage,
+                limit: pageSize
+            });
+            setBusinessesData(result.data);
+            setTotalCount(result.total);
+        } catch (error) {
+            console.error('Error fetching businesses:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
-
     fetchBusinesses();
-  }, [page]);
+  }, [filters, currentPage, pageSize]);
 
-  const filteredBusinesses = useMemo(() => {
-    return directoryBusinesses.filter(business => {
-      const categoryMatch = filters.category === 'all' || business.category === filters.category;
-      const ratingMatch = business.rating >= filters.rating;
-      return categoryMatch && ratingMatch;
-    });
-  }, [directoryBusinesses, filters]);
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <section className="py-16">
@@ -141,7 +128,24 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1 space-y-4 text-start rtl:text-right">
             <GlassCard className="p-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center justify-between">{t('directory.filters')}<button onClick={() => setFilters({ category: 'all', rating: 0 })} className="text-xs text-secondary hover:text-secondary/80">{t('directory.reset')}</button></h3>
+              <h3 className="text-white font-semibold mb-4 flex items-center justify-between">
+                {t('directory.filters')}
+                <button onClick={() => setFilters({ category: 'all', rating: 0, city: '' })} className="text-xs text-secondary hover:text-secondary/80">
+                  {t('directory.reset')}
+                </button>
+              </h3>
+              
+              <div className="mb-6">
+                <label className="block text-white/80 text-sm mb-2">{t('directory.city') || "City"}</label>
+                <input 
+                  type="text"
+                  value={filters.city}
+                  onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                  placeholder={t('directory.cityPlaceholder') || "Search by city..."}
+                  className="w-full px-4 py-3 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white outline-none focus:border-primary transition-colors"
+                />
+              </div>
+
               <div className="mb-6">
                 <label className="block text-white/80 text-sm mb-2">{t('directory.category')}</label>
                 <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="w-full px-4 py-3 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white outline-none appearance-none bg-no-repeat bg-right-4" style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'left 0.75rem center', backgroundSize: '1.5em 1.5em'}}>
@@ -167,33 +171,44 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
           </div>
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
-              <p className="text-white/80">{filteredBusinesses.length} {t('directory.businessesFound')}</p>
+              <p className="text-white/80">{totalCount} {t('directory.businessesFound')}</p>
               <div className="flex items-center gap-2 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-1">
                 <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary' : 'hover:bg-white/10'}`}><Grid3x3 className="w-5 h-5 text-white" /></button>
                 <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary' : 'hover:bg-white/10'}`}><List className="w-5 h-5 text-white" /></button>
               </div>
             </div>
-            {fetchError && (
-              <GlassCard className="mb-6 p-4 border border-red-400/40 bg-red-500/10">
-                <p className="text-red-200 text-sm">{fetchError}</p>
-              </GlassCard>
+            
+            {isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                    <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                </div>
+            ) : (
+                <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-6' : 'space-y-4'}>
+                    {businessesData.map((business) => (<BusinessCard key={business.id} business={business} viewMode={viewMode} />))}
+                </div>
             )}
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-6' : 'space-y-4'}>
-              {filteredBusinesses.map((business) => (<BusinessCard key={business.id} business={business} viewMode={viewMode} />))}
-            </div>
-            <div className="mt-6 flex justify-center">
-              {hasMore ? (
-                <button
-                  onClick={() => setPage((prev) => prev + 1)}
-                  disabled={isLoading}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold disabled:opacity-50"
-                >
-                  {isLoading ? 'Loading...' : 'Load more'}
-                </button>
-              ) : (
-                <p className="text-white/60 text-sm">No more businesses to load.</p>
-              )}
-            </div>
+
+            {totalPages > 1 && (
+                <div className="mt-12 flex items-center justify-center gap-4">
+                    <button 
+                        disabled={currentPage === 1 || isLoading}
+                        onClick={() => setCurrentPage(prev => prev - 1)}
+                        className="px-6 py-2 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white disabled:opacity-30 transition-all"
+                    >
+                        {t('directory.previous') || "Previous"}
+                    </button>
+                    <span className="text-white/70">
+                        {t('directory.page') || "Page"} {currentPage} {t('directory.of') || "of"} {totalPages}
+                    </span>
+                    <button 
+                        disabled={currentPage === totalPages || isLoading}
+                        onClick={() => setCurrentPage(prev => prev + 1)}
+                        className="px-6 py-2 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white disabled:opacity-30 transition-all"
+                    >
+                        {t('directory.next') || "Next"}
+                    </button>
+                </div>
+            )}
           </div>
         </div>
       </div>

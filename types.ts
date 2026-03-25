@@ -1,5 +1,4 @@
 import type React from 'react';
-import type { BusinessNameField } from './src/lib/utils';
 
 export interface Story {
   id: number;
@@ -35,7 +34,7 @@ export interface Category {
 
 export interface Business {
   id: string | number;
-  name: BusinessNameField;
+  name: string;
   nameAr?: string;
   nameKu?: string;
   coverImage?: string;
@@ -99,9 +98,44 @@ export interface Deal {
 }
 
 export interface User {
+  id: string;
   name: string;
   email: string;
   avatar: string;
+  role: 'owner' | 'user' | 'admin';
+  businessId?: string;
+}
+
+export interface Post {
+  id: string;
+  businessId: string;
+  businessName: string;
+  businessAvatar: string;
+  caption: string;
+  imageUrl: string;
+  createdAt: any;
+  likes: number;
+  verified?: boolean;
+}
+
+export interface BusinessPostcard {
+  id?: string;
+  title: string;
+  city: string;
+  neighborhood: string;
+  governorate: string;
+  category_tag: 'Cafe' | 'Restaurant' | 'Bakery' | 'Hotel' | 'Gym' | 'Salon' | 'Pharmacy' | 'Supermarket';
+  phone: string;
+  website?: string;
+  instagram?: string;
+  hero_image: string;
+  image_gallery: string[];
+  postcard_content: string;
+  google_maps_url: string;
+  rating: number;
+  review_count: number;
+  verified: boolean;
+  updatedAt?: any;
 }
 
 export interface HeroSlide {

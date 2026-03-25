@@ -9,9 +9,11 @@ import {
 
 // Mock User
 export const mockUser: User = {
+  id: 'u1',
   name: 'Salar Ali',
   email: 'salar.ali@example.com',
   avatar: 'https://i.pravatar.cc/150?u=salarali',
+  role: 'user'
 };
 
 // Hero Slides

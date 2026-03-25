@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "@google/genai": "latest",
-    "@supabase/supabase-js": "^2.57.4",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "firebase": "^12.11.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

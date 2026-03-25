@@ -21,9 +21,6 @@
     "paths": {
       "@/*": [
         "./*"
-      ],
-      "@supabase/supabase-js": [
-        "./src/shims/supabase-js.ts"
       ]
     },
     "allowImportingTsExtensions": true,
