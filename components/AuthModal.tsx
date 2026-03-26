@@ -6,7 +6,7 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 interface AuthModalProps {
     onClose: () => void;
-    onLogin: (email: string, role: 'user' | 'owner') => void;
+    onLogin: (role: 'user' | 'owner') => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
@@ -18,14 +18,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
+            // Store the role in sessionStorage BEFORE triggering the popup
+            // to ensure onAuthStateChanged picks it up correctly.
+            sessionStorage.setItem('pending_role', role);
+            
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            if (result.user) {
-                onLogin(result.user.email || '', role);
-            }
+            await signInWithPopup(auth, provider);
+            onLogin(role);
         } catch (error) {
             console.error('Google Sign-In Error:', error);
-            alert('Failed to sign in with Google. Please try again.');
+            // Clear the pending role if sign-in fails
+            sessionStorage.removeItem('pending_role');
         } finally {
             setIsLoading(false);
         }

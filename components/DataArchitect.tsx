@@ -45,7 +45,7 @@ export const DataArchitect: React.FC = () => {
       const flagged: { name: string; city: string; reason: string }[] = [];
       const postcards: BusinessPostcard[] = [];
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
 
       for (const place of places) {
         const name = place.title || place.name;
@@ -87,7 +87,7 @@ export const DataArchitect: React.FC = () => {
         let tagline = `${name} in ${city}`;
         try {
             const aiResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-3-flash-preview',
                 contents: `You are a creative copywriter for a local business discovery app in Iraq.
                 Based on these Google Maps reviews for "${name}":
                 ${topReviews}

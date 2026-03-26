@@ -18,12 +18,23 @@ const SearchSuggestions = () => {
     );
 }
 
-export const SearchPortal: React.FC = () => {
+interface SearchPortalProps {
+    onSearch?: (query: string) => void;
+}
+
+export const SearchPortal: React.FC<SearchPortalProps> = ({ onSearch }) => {
     const [showSuggestions, setShowSuggestions] = React.useState(false);
     const [isListening, setIsListening] = React.useState(false);
     const [inputValue, setInputValue] = React.useState('');
     const { t, lang } = useTranslations();
     const recognitionRef = React.useRef<any>(null);
+
+    const handleSearchSubmit = (query: string) => {
+        if (query.trim()) {
+            onSearch?.(query);
+            setShowSuggestions(false);
+        }
+    };
 
     React.useEffect(() => {
         // FIX: Property 'SpeechRecognition' and 'webkitSpeechRecognition' do not exist on type 'Window'.
@@ -61,7 +72,7 @@ export const SearchPortal: React.FC = () => {
         recognition.onresult = (event: any) => {
             const transcript = event.results[0][0].transcript;
             setInputValue(transcript);
-            setShowSuggestions(true);
+            handleSearchSubmit(transcript);
         };
         
         recognitionRef.current = recognition;
@@ -78,6 +89,12 @@ export const SearchPortal: React.FC = () => {
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSearchSubmit(inputValue);
+        }
+    };
+
     return (
          <div className="container mx-auto px-4 py-6">
             <div className="max-w-3xl mx-auto w-full" onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}>
@@ -91,6 +108,7 @@ export const SearchPortal: React.FC = () => {
                             onFocus={() => setShowSuggestions(true)}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={handleKeyDown}
                         />
                         <button 
                             className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center hover:scale-110 transition-transform group-hover:shadow-[0_0_20px_rgba(0,217,255,0.5)] disabled:opacity-50 disabled:cursor-not-allowed" 
@@ -110,7 +128,11 @@ export const SearchPortal: React.FC = () => {
                         t('hero.filters.entertainment'), 
                         t('hero.filters.deals')
                     ].map(filter => (
-                        <button key={filter} className="px-3 py-1.5 md:px-4 md:py-2 rounded-full backdrop-blur-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-200 text-white/80 hover:text-white text-xs md:text-sm">
+                        <button 
+                            key={filter} 
+                            onClick={() => handleSearchSubmit(filter)}
+                            className="px-3 py-1.5 md:px-4 md:py-2 rounded-full backdrop-blur-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-200 text-white/80 hover:text-white text-xs md:text-sm"
+                        >
                             {filter}
                         </button>
                     ))}

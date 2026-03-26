@@ -1,10 +1,36 @@
-import React from 'react';
-import { deals } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { api } from '../services/api';
+import type { Deal } from '../types';
 import { Clock, Tag } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 
 export const DealsMarketplace: React.FC = () => {
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslations();
+
+  useEffect(() => {
+    const fetchDeals = async () => {
+      setIsLoading(true);
+      try {
+        const data = await api.getDeals();
+        setDeals(data);
+      } catch (error) {
+        console.error('Error fetching deals:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDeals();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="py-16 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <section className="py-16 relative">
@@ -15,7 +41,13 @@ export const DealsMarketplace: React.FC = () => {
       <div className="container mx-auto px-4 relative z-10">
         <h2 className="text-3xl font-bold text-white mb-8 text-center">{t('deals.title')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {deals.map((deal) => (
+          {deals.length === 0 ? (
+            <div className="col-span-full py-12 flex flex-col items-center justify-center text-center opacity-50">
+              <Tag className="w-12 h-12 text-white/20 mb-4" />
+              <p className="text-white/60 text-sm">{t('deals.noDeals') || "No active deals at the moment."}</p>
+            </div>
+          ) : (
+            deals.map((deal) => (
             <div key={deal.id} className="relative group backdrop-blur-xl bg-gradient-to-br from-accent/10 to-primary/10 border border-white/10 rounded-2xl p-6 hover:border-accent/50 hover:shadow-glow-accent transition-all duration-300 overflow-hidden text-start">
               <div className="absolute top-0 end-0 w-24 h-24">
                 <div className="absolute top-0 end-0 w-full h-full bg-gradient-to-br from-accent to-primary transform rtl:-rotate-45 ltr:rotate-45 rtl:-translate-x-8 ltr:translate-x-8 -translate-y-8"></div>
@@ -44,7 +76,7 @@ export const DealsMarketplace: React.FC = () => {
                 {t('deals.claimNow')}
               </button>
             </div>
-          ))}
+          )))}
         </div>
       </div>
     </section>

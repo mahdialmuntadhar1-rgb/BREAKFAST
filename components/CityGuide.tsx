@@ -47,9 +47,9 @@ export const CityGuide: React.FC = () => {
       setJourneyPoints([]);
       
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
         const response = await ai.models.generateContent({
-           model: "gemini-2.5-flash",
+           model: "gemini-3-flash-preview",
            contents: `Create a travel itinerary for the following request: "${searchQuery}". The trip should be in Iraq. Provide a list of waypoints.`,
            config: {
              responseMimeType: "application/json",
@@ -132,7 +132,15 @@ export const CityGuide: React.FC = () => {
                       <WaypointSkeleton />
                   </div>
               )}
-              {error && <p className="text-red-400 text-sm text-center py-8">{error}</p>}
+              {error && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
+                    <Sparkles className="w-6 h-6 text-red-400" />
+                  </div>
+                  <p className="text-red-400 text-sm font-medium mb-1">{t('cityGuide.errorTitle') || "Generation Failed"}</p>
+                  <p className="text-white/40 text-xs px-4">{error}</p>
+                </div>
+              )}
 
               {!isLoading && !error && journeyPoints.length === 0 && (
                   <p className="text-white/60 text-sm text-center py-8">{t('cityGuide.addWaypoints')}</p>

@@ -52,7 +52,6 @@ export interface Business {
   reviews?: number;
   reviewCount?: number;
   governorate?: string;
-  governorateId?: string;
   city?: string;
   address?: string;
   phone?: string;
