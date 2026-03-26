@@ -6,7 +6,6 @@ required_vars=(
   VITE_SUPABASE_ANON_KEY
   VITE_CLOUDFLARE_ACCOUNT_ID
   VITE_CLOUDFLARE_PROJECT_NAME
-  VITE_AI_API_BASE_URL
 )
 
 missing=0
@@ -20,6 +19,10 @@ done
 if [[ "${missing}" -ne 0 ]]; then
   echo "Preflight failed due to missing Supabase/Cloudflare environment variables."
   exit 1
+fi
+
+if [[ -z "${VITE_AI_API_BASE_URL:-}" ]]; then
+  echo "Warning: VITE_AI_API_BASE_URL is not set. AI-assisted features will be disabled."
 fi
 
 echo "Running lint..."
