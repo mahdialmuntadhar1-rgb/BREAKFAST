@@ -49,7 +49,11 @@ import {
   MessageCircle, 
   Share2, 
   MoreHorizontal, 
-  Calendar 
+  Calendar,
+  ChevronRight,
+  ChevronLeft,
+  LogOut,
+  LayoutDashboard
 } from 'lucide-react';
 
 export {
@@ -103,6 +107,10 @@ export {
   MessageCircle,
   Share2,
   MoreHorizontal,
-  Calendar
+  Calendar,
+  ChevronRight,
+  ChevronLeft,
+  LogOut,
+  LayoutDashboard
 };
 

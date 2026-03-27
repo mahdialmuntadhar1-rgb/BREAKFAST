@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { HeroSection } from './components/HeroSection';
-import { StoriesRing } from './components/StoriesRing';
-import { CategoryGrid } from './components/CategoryGrid';
-import { FeaturedBusinesses } from './components/FeaturedBusinesses';
-import { PersonalizedEvents } from './components/PersonalizedEvents';
-import { DealsMarketplace } from './components/DealsMarketplace';
-import { CommunityStories } from './components/CommunityStories';
-import { CityGuide } from './components/CityGuide';
 import { BusinessDirectory } from './components/BusinessDirectory';
-import { InclusiveFeatures } from './components/InclusiveFeatures';
-import { SocialFeed } from './components/SocialFeed';
 import { AuthModal } from './components/AuthModal';
 import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
-import { GovernorateFilter } from './components/GovernorateFilter';
-import { SearchPortal } from './components/SearchPortal';
-import { mockUser } from './constants';
+import { HomePage } from './components/HomePage';
 import { api } from './services/api';
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User, Category, Subcategory, Post } from './types';
-import { TranslationProvider } from './hooks/useTranslations';
+import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { translations } from './constants';
@@ -223,34 +211,19 @@ const MainContent: React.FC = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <HeroSection />
-              <StoriesRing />
-              <CategoryGrid 
-                onCategoryClick={handleCategoryClick} 
+              <HomePage 
+                posts={posts}
+                isSocialLoading={isSocialLoading}
+                isLoggedIn={isLoggedIn}
+                onCategoryClick={handleCategoryClick}
                 currentPage={currentPage}
                 setCurrentPage={setCurrentPage}
+                onSearch={handleSearch}
+                selectedGovernorate={selectedGovernorate}
+                onGovernorateChange={handleGovernorateChange}
+                highContrast={highContrast}
+                setHighContrast={setHighContrast}
               />
-              <div className="container mx-auto px-4 py-12">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                      <div className="lg:col-span-2">
-                          <h2 className="text-3xl font-bold text-white mb-8">{t('social.ecosystemTitle')}</h2>
-                          <SocialFeed posts={posts} isLoading={isSocialLoading} isLoggedIn={isLoggedIn} />
-                      </div>
-                      <div className="space-y-12">
-                          <SearchPortal onSearch={handleSearch} />
-                          <GovernorateFilter 
-                            selectedGovernorate={selectedGovernorate}
-                            onGovernorateChange={handleGovernorateChange}
-                          />
-                      </div>
-                  </div>
-              </div>
-              <FeaturedBusinesses />
-              <PersonalizedEvents />
-              <DealsMarketplace />
-              <CommunityStories />
-              <CityGuide />
-              <InclusiveFeatures highContrast={highContrast} setHighContrast={setHighContrast} />
             </motion.div>
           )}
           {page === 'listing' && listingFilter && (
