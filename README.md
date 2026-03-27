@@ -31,3 +31,12 @@ This repository is configured for **Cloudflare Pages** deployment only.
 - Do **not** use Cloudflare Workers deployment for this repo.
 - No `wrangler` deploy scripts or Workers config are required.
 - `.wrangler/` artifacts are intentionally ignored and should not be committed.
+## Cloudflare Pages deployment
+
+Configure Cloudflare Pages with:
+
+- **Build command:** `npm run build`
+- **Build output directory:** `dist`
+- **Environment variables:**
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
