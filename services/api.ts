@@ -6,7 +6,6 @@ import {
     limit, 
     startAfter, 
     orderBy, 
-    addDoc, 
     serverTimestamp, 
     doc, 
     getDoc, 
@@ -235,12 +234,14 @@ export const api = {
     async createPost(postData: Partial<Post>) {
         const path = 'posts';
         try {
-            const docRef = await addDoc(collection(db, path), {
+            const postRef = doc(collection(db, path));
+            await setDoc(postRef, {
+                id: postRef.id,
                 ...postData,
                 createdAt: serverTimestamp(),
                 likes: 0
             });
-            return { success: true, id: docRef.id };
+            return { success: true, id: postRef.id };
         } catch (error) {
             handleFirestoreError(error, OperationType.WRITE, path);
             return { success: false };

@@ -105,7 +105,7 @@ const MainContent: React.FC = () => {
     };
 
     syncProfile().catch((error) => {
-      console.error('Failed to sync profile with Supabase Auth:', error);
+      console.error('Failed to sync profile with Firebase Auth:', error);
       setCurrentUser(null);
       setIsLoggedIn(false);
     });
