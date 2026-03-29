@@ -26,6 +26,8 @@ interface HomePageProps {
   onGovernorateChange: (gov: string) => void;
   highContrast: boolean;
   setHighContrast: (val: boolean) => void;
+  onExploreClick: () => void;
+  onLearnMoreClick: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -40,12 +42,14 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGovernorateChange,
   highContrast,
   setHighContrast,
+  onExploreClick,
+  onLearnMoreClick,
 }) => {
   const { t } = useTranslations();
 
   return (
     <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
-      <HeroSection />
+      <HeroSection onExplore={onExploreClick} onLearnMore={onLearnMoreClick} />
       <StoriesRing />
       
       <CategoriesSection 

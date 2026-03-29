@@ -1,352 +1,222 @@
-import { 
-    collection, 
-    getDocs, 
-    query, 
-    where, 
-    limit, 
-    startAfter, 
-    orderBy, 
-    addDoc, 
-    serverTimestamp, 
-    doc, 
-    getDoc, 
-    setDoc,
-    getDocFromServer,
-    Timestamp,
-    onSnapshot,
-    QueryDocumentSnapshot,
-    DocumentData
-} from 'firebase/firestore';
-import { db, auth } from '../firebase';
-import type { Business, Post, User, BusinessPostcard } from '../types';
-import * as mockData from '../constants';
-import firebaseConfig from '../firebase-applet-config.json';
+import { supabase, type SupabaseAuthUser } from './supabase';
+import type { Business, Post, User, BusinessPostcard, Deal, Event, Story } from '../types';
 
-const isConfigValid = firebaseConfig.projectId && !firebaseConfig.projectId.startsWith('remixed-');
+const PAGE_SIZE = 20;
 
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
+type BusinessQueryParams = {
+  category?: string;
+  city?: string;
+  governorate?: string;
+  page?: number;
+  limit?: number;
+  featuredOnly?: boolean;
+};
 
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
-    }[];
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
-}
-
-// Test connection
-async function testConnection() {
-  if (!isConfigValid) return;
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. ");
-    }
-  }
-}
-testConnection();
+const normalizePost = (post: any): Post => ({
+  ...post,
+  id: String(post.id),
+  createdAt: post.createdAt ? new Date(post.createdAt) : new Date(),
+  isVerified: post.isVerified ?? post.verified ?? false
+});
 
 export const api = {
-    async getBusinesses(params: { category?: string; city?: string; governorate?: string; lastDoc?: QueryDocumentSnapshot<DocumentData>; limit?: number; featuredOnly?: boolean } = {}) {
-        if (!isConfigValid) {
-            let filtered = [...mockData.businesses];
-            if (params.featuredOnly) filtered = filtered.filter(b => b.isFeatured);
-            if (params.category && params.category !== 'all') filtered = filtered.filter(b => b.category === params.category);
-            if (params.governorate && params.governorate !== 'all') filtered = filtered.filter(b => b.governorate === params.governorate);
-            return { data: filtered.slice(0, params.limit || 20), hasMore: false };
-        }
+  async getBusinesses(params: BusinessQueryParams = {}) {
+    const page = params.page ?? 0;
+    const pageSize = params.limit ?? PAGE_SIZE;
 
-        const path = 'businesses';
-        try {
-            // ... (rest of the existing getBusinesses logic)
-            let q;
-            const searchStr = params.city?.trim();
-            
-            if (searchStr) {
-                q = query(collection(db, path), where('city', '>=', searchStr), where('city', '<=', searchStr + '\uf8ff'), orderBy('city'), orderBy('name'));
-            } else {
-                q = query(collection(db, path), orderBy('name'));
-            }
-            
-            if (params.category && params.category !== 'all') {
-                q = query(q, where('category', '==', params.category));
-            }
+    let query = supabase.from('businesses').select('*').order('name', { ascending: true });
 
-            if (params.governorate && params.governorate !== 'all') {
-                q = query(q, where('governorate', '==', params.governorate));
-            }
+    if (params.featuredOnly) query = query.eq('isFeatured', true);
+    if (params.category && params.category !== 'all') query = query.eq('category', params.category);
+    if (params.governorate && params.governorate !== 'all') query = query.eq('governorate', params.governorate);
+    if (params.city?.trim()) query = query.ilike('city', `%${params.city.trim()}%`);
 
-            if (params.featuredOnly) {
-                q = query(q, where('isFeatured', '==', true));
-            }
-            
-            if (params.lastDoc) {
-                q = query(q, startAfter(params.lastDoc));
-            }
+    const start = page * pageSize;
+    const end = start + pageSize - 1;
+    const { data, error } = await query.range(start, end).execute();
 
-            const pageSize = params.limit || 20;
-            q = query(q, limit(pageSize));
-            
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => {
-                const d = doc.data() as any;
-                return { 
-                    id: doc.id, 
-                    ...d,
-                    isVerified: d.isVerified ?? d.verified ?? false
-                } as Business;
-            });
-            const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+    if (error) throw error;
 
-            return {
-                data,
-                lastDoc: lastVisible,
-                hasMore: data.length === pageSize
-            };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return { data: mockData.businesses.slice(0, params.limit || 20), hasMore: false };
-        }
-    },
+    const businesses = (data ?? []).map((row: any) => ({
+      ...row,
+      id: String(row.id),
+      isVerified: row.isVerified ?? row.verified ?? false
+    } as Business));
 
-    subscribeToPosts(callback: (posts: Post[]) => void) {
-        if (!isConfigValid) {
-            callback(mockData.posts || []);
-            return () => {};
-        }
+    return {
+      data: businesses,
+      hasMore: businesses.length >= pageSize,
+      page
+    };
+  },
 
-        const path = 'posts';
-        const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(50));
-        
-        return onSnapshot(q, (snapshot) => {
-            const postsMap = new Map<string, Post>();
-            
-            snapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const post = { 
-                    id: doc.id, 
-                    ...data,
-                    createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
-                    isVerified: data.isVerified ?? data.verified ?? false
-                } as Post;
-                postsMap.set(post.id, post);
-            });
-            
-            callback(Array.from(postsMap.values()));
-        }, (error) => {
-            handleFirestoreError(error, OperationType.GET, path);
-            callback(mockData.posts || []);
-        });
-    },
+  async getPosts(params: { page?: number; limit?: number } = {}) {
+    const page = params.page ?? 0;
+    const limit = params.limit ?? 50;
+    const start = page * limit;
+    const end = start + limit - 1;
 
-    async getDeals() {
-        if (!isConfigValid) return mockData.deals || [];
-        const path = 'deals';
-        try {
-            const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(10));
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return mockData.deals || [];
-        }
-    },
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .order('createdAt', { ascending: false })
+      .range(start, end).execute();
 
-    async getStories() {
-        if (!isConfigValid) return mockData.stories || [];
-        const path = 'stories';
-        try {
-            const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(20));
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return mockData.stories || [];
-        }
-    },
+    if (error) throw error;
 
-    async getEvents(params: { category?: string; governorate?: string } = {}) {
-        if (!isConfigValid) {
-            let filtered = [...mockData.events];
-            if (params.category && params.category !== 'all') filtered = filtered.filter(e => e.category === params.category);
-            if (params.governorate && params.governorate !== 'all') filtered = filtered.filter(e => e.governorate === params.governorate);
-            return filtered;
-        }
+    const posts = (data ?? []).map(normalizePost);
+    return { data: posts, hasMore: posts.length >= limit, page };
+  },
 
-        const path = 'events';
-        try {
-            let q = query(collection(db, path), orderBy('date', 'asc'));
-            if (params.category && params.category !== 'all') {
-                q = query(q, where('category', '==', params.category));
-            }
-            if (params.governorate && params.governorate !== 'all') {
-                q = query(q, where('governorate', '==', params.governorate));
-            }
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    ...data,
-                    date: data.date ? (data.date as Timestamp).toDate() : new Date()
-                } as any;
-            });
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return mockData.events || [];
-        }
-    },
+  subscribeToPosts(callback: (posts: Post[]) => void) {
+    let channel: any = null;
 
-    async createPost(postData: Partial<Post>) {
-        if (!isConfigValid) return { success: true, id: 'mock_post_id' };
-        const path = 'posts';
-        try {
-            const docRef = await addDoc(collection(db, path), {
-                ...postData,
-                createdAt: serverTimestamp(),
-                likes: 0
-            });
-            return { success: true, id: docRef.id };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { success: false };
-        }
-    },
+    const loadInitial = async () => {
+      const { data } = await this.getPosts({ page: 0, limit: 50 });
+      callback(data);
+    };
 
-    async getOrCreateProfile(firebaseUser: any, requestedRole: 'user' | 'owner' = 'user') {
-        if (!firebaseUser) return null;
-        if (!isConfigValid) return { ...mockData.mockUser, id: firebaseUser.uid, email: firebaseUser.email || '' };
-        
-        const path = `users/${firebaseUser.uid}`;
-        try {
-            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-            
-            const adminEmail = 'safaribosafar@gmail.com';
-            const isAdminEmail = firebaseUser.email === adminEmail && firebaseUser.emailVerified;
-            
-            if (userDoc.exists()) {
-                const userData = userDoc.data() as User;
-                if (isAdminEmail && userData.role !== 'admin') {
-                    const updatedUser = { ...userData, role: 'admin' as any };
-                    await setDoc(doc(db, 'users', firebaseUser.uid), updatedUser, { merge: true });
-                    return updatedUser;
-                }
-                return userData;
-            } else {
-                const newUser: User = {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-                    email: firebaseUser.email || '',
-                    avatar: firebaseUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firebaseUser.uid}`,
-                    role: isAdminEmail ? 'admin' as any : requestedRole,
-                    businessId: requestedRole === 'owner' ? `b_${firebaseUser.uid}` : undefined
-                };
-                await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-                return newUser;
-            }
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { ...mockData.mockUser, id: firebaseUser.uid, email: firebaseUser.email || '' };
-        }
-    },
+    loadInitial().catch((error) => console.error('Failed to load posts:', error));
 
-    async upsertPostcard(postcard: BusinessPostcard) {
-        if (!isConfigValid) return { success: true, id: 'mock_postcard_id' };
-        const path = 'business_postcards';
-        try {
-            const docId = `${postcard.title}_${postcard.city}`.replace(/\s+/g, '_').toLowerCase();
-            const docRef = doc(db, path, docId);
-            
-            await setDoc(docRef, {
-                ...postcard,
-                updatedAt: serverTimestamp()
-            }, { merge: true });
-            
-            return { success: true, id: docId };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { success: false };
-        }
-    },
+    channel = supabase
+      .channel('posts-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
+        loadInitial().catch((error) => console.error('Failed to refresh posts:', error));
+      })
+      .subscribe();
 
-    async getPostcards(governorate?: string) {
-        if (!isConfigValid) return [];
-        const path = 'business_postcards';
-        try {
-            let q = query(collection(db, path), orderBy('updatedAt', 'desc'));
-            if (governorate && governorate !== 'all') {
-                q = query(q, where('governorate', '==', governorate));
-            }
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => {
-                const data = doc.data();
-                return { 
-                    id: doc.id, 
-                    ...data,
-                    isVerified: data.isVerified ?? data.verified ?? false,
-                    updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined
-                } as unknown as BusinessPostcard;
-            });
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return [];
-        }
-    },
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  },
 
-    async updateProfile(userId: string, data: Partial<User>) {
-        if (!isConfigValid) return { success: true };
-        const path = `users/${userId}`;
-        try {
-            await setDoc(doc(db, 'users', userId), {
-                ...data,
-                updatedAt: serverTimestamp()
-            }, { merge: true });
-            return { success: true };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { success: false };
-        }
+  async getDeals() {
+    const { data, error } = await supabase
+      .from('deals')
+      .select('*')
+      .order('createdAt', { ascending: false })
+      .limit(10).execute();
+
+    if (error) throw error;
+    return (data ?? []) as Deal[];
+  },
+
+  async getStories() {
+    const { data, error } = await supabase
+      .from('stories')
+      .select('*')
+      .order('createdAt', { ascending: false })
+      .limit(20).execute();
+
+    if (error) throw error;
+    return (data ?? []) as Story[];
+  },
+
+  async getEvents(params: { category?: string; governorate?: string } = {}) {
+    let query = supabase.from('events').select('*').order('date', { ascending: true });
+
+    if (params.category && params.category !== 'all') query = query.eq('category', params.category);
+    if (params.governorate && params.governorate !== 'all') query = query.eq('governorate', params.governorate);
+
+    const { data, error } = await query.execute();
+    if (error) throw error;
+
+    return (data ?? []).map((row: any) => ({ ...row, date: row.date ? new Date(row.date) : new Date() })) as Event[];
+  },
+
+  async createPost(postData: Partial<Post>) {
+    const { data, error } = await supabase
+      .from('posts')
+      .insert({ ...postData, createdAt: new Date().toISOString(), likes: 0 })
+      .select('id')
+      .single().execute();
+
+    if (error) return { success: false };
+    return { success: true, id: String(data.id) };
+  },
+
+  async getOrCreateProfile(authUser: SupabaseAuthUser, requestedRole: 'user' | 'owner' = 'user') {
+    const adminEmail = 'safaribosafar@gmail.com';
+    const isAdminEmail = authUser.email === adminEmail;
+
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authUser.id)
+      .maybeSingle().execute();
+
+    if (fetchError) throw fetchError;
+
+    if (existingUser) {
+      if (isAdminEmail && existingUser.role !== 'admin') {
+        const { data: updated } = await supabase
+          .from('users')
+          .update({ role: 'admin' })
+          .eq('id', authUser.id)
+          .select('*')
+          .single().execute();
+
+        return updated as User;
+      }
+      return existingUser as User;
     }
+
+    const newUser: User = {
+      id: authUser.id,
+      name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+      email: authUser.email || '',
+      avatar: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.id}`,
+      role: isAdminEmail ? 'admin' : requestedRole,
+      businessId: requestedRole === 'owner' ? `b_${authUser.id}` : undefined
+    };
+
+    const { data: inserted, error: insertError } = await supabase.from('users').insert(newUser).select('*').single().execute();
+    if (insertError) throw insertError;
+
+    return inserted as User;
+  },
+
+  async upsertPostcard(postcard: BusinessPostcard) {
+    const payload = {
+      ...postcard,
+      updatedAt: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('business_postcards')
+      .upsert(payload, { onConflict: 'id' })
+      .select('id')
+      .single().execute();
+
+    if (error) return { success: false };
+    return { success: true, id: String(data.id) };
+  },
+
+  async getPostcards(governorate?: string) {
+    let query = supabase.from('business_postcards').select('*').order('updatedAt', { ascending: false });
+
+    if (governorate && governorate !== 'all') {
+      query = query.eq('governorate', governorate);
+    }
+
+    const { data, error } = await query.execute();
+    if (error) throw error;
+
+    return (data ?? []).map((row: any) => ({
+      ...row,
+      id: String(row.id),
+      verified: row.verified ?? row.isVerified ?? false,
+      updatedAt: row.updatedAt ? new Date(row.updatedAt) : undefined
+    })) as BusinessPostcard[];
+  },
+
+  async updateProfile(userId: string, data: Partial<User>) {
+    const { error } = await supabase
+      .from('users')
+      .update({ ...data, updatedAt: new Date().toISOString() })
+      .eq('id', userId)
+      .execute();
+
+    return { success: !error };
+  }
 };

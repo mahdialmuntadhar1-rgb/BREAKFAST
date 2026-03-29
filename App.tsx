@@ -6,10 +6,10 @@ import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
 import { HomePage } from './components/HomePage';
 import { api } from './services/api';
-import { auth } from './firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { supabase } from './services/supabase';
 import type { User, Category, Subcategory, Post } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
+import { AppSettingsProvider, useAppSettings } from './hooks/useAppSettings';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { translations } from './constants';
@@ -80,7 +80,7 @@ const MainContent: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [listingFilter, setListingFilter] = useState<{ categoryId?: string; city?: string; governorate?: string } | null>(null);
-  const [selectedGovernorate, setSelectedGovernorate] = useState('all');
+  const { selectedGovernorate, setSelectedGovernorate } = useAppSettings();
   const [searchQuery, setSearchQuery] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [isSocialLoading, setIsSocialLoading] = useState(true);
@@ -93,20 +93,17 @@ const MainContent: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+
+    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) return;
-      
+
       try {
-        if (firebaseUser) {
-          // Retrieve the role from sessionStorage if it was set during the AuthModal flow
-          const pendingRole = sessionStorage.getItem('pending_role') as 'user' | 'owner' | null;
-          const user = await api.getOrCreateProfile(firebaseUser, pendingRole || 'user');
+        if (session?.user) {
+          const user = await api.getOrCreateProfile(session.user, 'user');
           if (isMounted) {
             setCurrentUser(user);
             setIsLoggedIn(!!user);
           }
-          sessionStorage.removeItem('pending_role');
         } else {
           if (isMounted) {
             setCurrentUser(null);
@@ -114,29 +111,22 @@ const MainContent: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error("Auth state change error:", err);
+        console.error('Auth state change error:', err);
       } finally {
-        if (isMounted) {
-          setIsAuthReady(true);
-        }
+        if (isMounted) setIsAuthReady(true);
       }
     });
 
-    // Safety timeout: If Firebase doesn't respond within 4 seconds, 
-    // we proceed to the app anyway to avoid a stuck loading screen.
     const timeoutId = setTimeout(() => {
-      if (isMounted && !isAuthReady) {
-        console.warn("Auth initialization timed out. Proceeding...");
-        setIsAuthReady(true);
-      }
+      if (isMounted) setIsAuthReady(true);
     }, 4000);
 
     return () => {
       isMounted = false;
-      unsubscribe();
+      data.subscription.unsubscribe();
       clearTimeout(timeoutId);
     };
-  }, [isAuthReady]);
+  }, []);
 
   useEffect(() => {
     setIsSocialLoading(true);
@@ -167,15 +157,11 @@ const MainContent: React.FC = () => {
   }, [highContrast]);
 
   const handleLogin = (role: 'user' | 'owner') => {
-    // Auth is handled in AuthModal via signInWithPopup, 
-    // which triggers onAuthStateChanged above.
-    // We store the role in sessionStorage to be picked up by the listener.
-    sessionStorage.setItem('pending_role', role);
-    setShowAuthModal(false);
+setShowAuthModal(false);
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
     setIsLoggedIn(false);
     setCurrentUser(null);
     setPage('home');
@@ -260,6 +246,8 @@ const MainContent: React.FC = () => {
                 onGovernorateChange={handleGovernorateChange}
                 highContrast={highContrast}
                 setHighContrast={setHighContrast}
+                onExploreClick={() => { setListingFilter({}); setPage('listing'); }}
+                onLearnMoreClick={() => setShowAuthModal(true)}
               />
             </motion.div>
           )}
@@ -304,7 +292,9 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <TranslationProvider>
-        <MainContent />
+        <AppSettingsProvider>
+          <MainContent />
+        </AppSettingsProvider>
       </TranslationProvider>
     </ErrorBoundary>
   );

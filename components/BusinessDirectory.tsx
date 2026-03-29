@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { categories, governorates } from '../constants';
 import { api } from '../services/api';
 import type { Business } from '../types';
@@ -77,7 +76,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pageSize] = useState(20);
   const [businessesData, setBusinessesData] = useState<Business[]>([]);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(undefined);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,12 +105,12 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
             category: filters.category,
             city: filters.city,
             governorate: filters.governorate,
-            lastDoc: isLoadMore ? lastDoc : undefined,
+            page: isLoadMore ? page + 1 : 0,
             limit: pageSize
         });
-        
+
         setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
-        setLastDoc(result.lastDoc);
+        setPage(result.page);
         setHasMore(result.hasMore);
     } catch (err) {
         console.error('Error fetching businesses:', err);
@@ -123,6 +122,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   };
 
   useEffect(() => {
+    setPage(0);
     fetchBusinesses();
   }, [filters, pageSize]);
 
