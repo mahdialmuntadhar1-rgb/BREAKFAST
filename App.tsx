@@ -12,7 +12,7 @@ import type { User, Category, Subcategory, Post } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
 
-import { translations } from './constants';
+import { translations, mockUser } from './constants';
 
 const getTranslation = (key: string) => {
   const lang = (localStorage.getItem('iraq-compass-lang') as 'en' | 'ar' | 'ku') || 'en';
@@ -167,18 +167,32 @@ const MainContent: React.FC = () => {
   }, [highContrast]);
 
   const handleLogin = (role: 'user' | 'owner') => {
-    // Auth is handled in AuthModal via signInWithPopup, 
-    // which triggers onAuthStateChanged above.
-    // We store the role in sessionStorage to be picked up by the listener.
+    // The modal currently completes a local signup flow.
+    // We create a safe local session so dashboard access is not blocked.
+    const sessionUser: User = {
+      ...mockUser,
+      id: `local_${Date.now()}`,
+      role,
+      businessId: role === 'owner' ? `b_local_${Date.now()}` : null,
+    };
+    setCurrentUser(sessionUser);
+    setIsLoggedIn(true);
+    setPage('dashboard');
     sessionStorage.setItem('pending_role', role);
     setShowAuthModal(false);
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-    setPage('home');
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.warn('Sign out fallback to local session clear:', err);
+    } finally {
+      sessionStorage.removeItem('pending_role');
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+      setPage('home');
+    }
   };
   
   const navigateTo = (targetPage: 'home' | 'dashboard') => {

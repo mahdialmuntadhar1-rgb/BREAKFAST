@@ -7,4 +7,4 @@ npm run lint
 echo "Running build..."
 npm run build
 
-echo "Preflight checks passed for Supabase deployment."
+echo "Preflight checks passed for Vite/Firebase deployment."
