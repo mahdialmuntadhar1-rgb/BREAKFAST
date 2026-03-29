@@ -18,7 +18,7 @@ export const CommunityStories: React.FC = () => {
       setIsLoading(true);
       try {
         const data = await api.getStories({ page, limit: 12 });
-        setStories(data);
+        setStories((prev) => (page === 0 ? data : [...prev, ...data]));
         setHasMore(data.length >= 12);
       } catch (error) {
         console.error('Error fetching stories:', error);
@@ -88,6 +88,13 @@ export const CommunityStories: React.FC = () => {
             <span className="text-white/80 text-sm font-medium">{t('stories.addYours')}</span>
           </div>
         </div>
+        {hasMore && (
+          <div className="mt-8 text-center">
+            <button onClick={() => setPage((p) => p + 1)} className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20">
+              {t('directory.loadMore')}
+            </button>
+          </div>
+        )}
       </div>
       {activeStory && <StoryViewer story={activeStory} onClose={() => setActiveStory(null)} />}
     </section>

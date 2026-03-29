@@ -21,7 +21,10 @@ export const DealsMarketplace: React.FC = () => {
       setIsLoading(true);
       try {
         const data = await api.getDeals({ page, limit: 12 });
-        if (isMounted) { setDeals(data); setHasMore(data.length >= 12); }
+        if (isMounted) {
+          setDeals((prev) => (page === 0 ? data : [...prev, ...data]));
+          setHasMore(data.length >= 12);
+        }
       } catch (error) {
         console.error('Error fetching deals:', error);
       } finally {

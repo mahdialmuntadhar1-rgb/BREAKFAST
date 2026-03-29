@@ -39,11 +39,12 @@ class ErrorBoundary extends (React.Component as any) {
 
 const MainContent: React.FC = () => {
   const { selectedGovernorate, setSelectedGovernorate } = useAppSettings();
-  const { t } = useTranslations();
+  const { t, setLang } = useTranslations();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authView, setAuthView] = useState<'signin' | 'signup' | 'forgot' | 'reset'>('signin');
   const [page, setPage] = useState<'home' | 'dashboard' | 'listing'>('home');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -56,17 +57,29 @@ const MainContent: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const syncProfile = async (authUser: any, fallbackRole: 'user' | 'owner' = 'user') => {
+      const pendingRole = (sessionStorage.getItem('pending_role') as 'user' | 'owner' | null) || fallbackRole;
+      const profile = await api.getOrCreateProfile(authUser, pendingRole);
+      if (!mounted) return;
+      setCurrentUser(profile);
+      setIsLoggedIn(Boolean(profile));
+      const preferredLang = (profile?.preferredLanguage || sessionStorage.getItem('pending_language')) as 'en' | 'ar' | 'ku' | null;
+      if (preferredLang) setLang(preferredLang);
+      sessionStorage.removeItem('pending_role');
+      sessionStorage.removeItem('pending_language');
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       try {
+        if (event === 'PASSWORD_RECOVERY') {
+          setAuthView('reset');
+          setShowAuthModal(true);
+        }
+
         const authUser = session?.user;
         if (authUser) {
-          const pendingRole = (sessionStorage.getItem('pending_role') as 'user' | 'owner' | null) || 'user';
-          const profile = await api.getOrCreateProfile(authUser, pendingRole);
-          if (mounted) {
-            setCurrentUser(profile);
-            setIsLoggedIn(Boolean(profile));
-          }
+          await syncProfile(authUser);
         } else {
           setCurrentUser(null);
           setIsLoggedIn(false);
@@ -76,25 +89,28 @@ const MainContent: React.FC = () => {
 
     void supabase.auth.getSession().then(async ({ data }) => {
       const authUser = data.session?.user;
-      if (authUser && mounted) {
-        const profile = await api.getOrCreateProfile(authUser, 'user');
-        setCurrentUser(profile);
-        setIsLoggedIn(Boolean(profile));
-      }
+      if (authUser && mounted) await syncProfile(authUser);
       if (mounted) setIsAuthReady(true);
     });
 
     return () => { mounted = false; subscription.unsubscribe(); };
-  }, []);
+  }, [setLang]);
 
   useEffect(() => {
-    setIsSocialLoading(true);
-    const unsubscribe = api.subscribeToPosts((newPosts) => {
-      setPosts(newPosts);
-      setHasMorePosts(newPosts.length >= 50);
-      setIsSocialLoading(false);
-    }, postsPage, 50);
-    return unsubscribe;
+    let mounted = true;
+    const fetchPosts = async () => {
+      setIsSocialLoading(true);
+      try {
+        const result = await api.getPosts({ page: postsPage, limit: 20 });
+        if (!mounted) return;
+        setPosts((prev) => (postsPage === 0 ? result.data : [...prev, ...result.data]));
+        setHasMorePosts(result.hasMore);
+      } finally {
+        if (mounted) setIsSocialLoading(false);
+      }
+    };
+    void fetchPosts();
+    return () => { mounted = false; };
   }, [postsPage]);
 
   useEffect(() => {
@@ -118,17 +134,16 @@ const MainContent: React.FC = () => {
     if (targetPage === 'dashboard' && !isLoggedIn) setShowAuthModal(true);
     else {
       setPage(targetPage);
-      if (targetPage === 'home') setListingFilter(null);
     }
   };
 
   const handleCategoryClick = (category: Category) => {
     if (category.subcategories?.length) setSelectedCategory(category);
-    else { setListingFilter({ categoryId: category.id }); setPage('listing'); }
+    else { setListingFilter({ categoryId: category.id, governorate: selectedGovernorate !== 'all' ? selectedGovernorate : undefined }); setPage('listing'); }
   };
 
   const handleSubcategorySelect = (category: Category, _subcategory: Subcategory) => {
-    setListingFilter({ categoryId: category.id });
+    setListingFilter({ categoryId: category.id, governorate: selectedGovernorate !== 'all' ? selectedGovernorate : undefined });
     setPage('listing');
     setSelectedCategory(null);
   };
@@ -147,17 +162,17 @@ const MainContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
-      <Header isLoggedIn={isLoggedIn} user={currentUser} onSignIn={() => setShowAuthModal(true)} onSignOut={handleLogout} onDashboard={() => navigateTo('dashboard')} onHome={() => navigateTo('home')} />
+      <Header isLoggedIn={isLoggedIn} user={currentUser} onSignIn={() => { setAuthView('signin'); setShowAuthModal(true); }} onSignOut={handleLogout} onDashboard={() => navigateTo('dashboard')} onHome={() => navigateTo('home')} />
       <main>
         <AnimatePresence mode="wait">
           {page === 'home' && <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-            <HomePage posts={posts} isSocialLoading={isSocialLoading} isLoggedIn={isLoggedIn} onCategoryClick={handleCategoryClick} currentPage={currentPage} setCurrentPage={setCurrentPage} onSearch={handleSearch} selectedGovernorate={selectedGovernorate} onGovernorateChange={handleGovernorateChange} highContrast={highContrast} setHighContrast={setHighContrast} onOpenAuth={() => setShowAuthModal(true)} onExploreDirectory={() => { setPage('listing'); setListingFilter({ governorate: selectedGovernorate !== 'all' ? selectedGovernorate : undefined }); }} onLoadMorePosts={() => setPostsPage((p) => p + 1)} hasMorePosts={hasMorePosts} />
+            <HomePage posts={posts} isSocialLoading={isSocialLoading} isLoggedIn={isLoggedIn} onCategoryClick={handleCategoryClick} currentPage={currentPage} setCurrentPage={setCurrentPage} onSearch={handleSearch} selectedGovernorate={selectedGovernorate} onGovernorateChange={handleGovernorateChange} highContrast={highContrast} setHighContrast={setHighContrast} onOpenAuth={() => { setAuthView('signin'); setShowAuthModal(true); }} onExploreDirectory={() => { setPage('listing'); setListingFilter({ governorate: selectedGovernorate !== 'all' ? selectedGovernorate : undefined }); }} onLoadMorePosts={() => setPostsPage((p) => p + 1)} hasMorePosts={hasMorePosts} />
           </motion.div>}
           {page === 'listing' && listingFilter && <motion.div key="listing" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}><BusinessDirectory initialFilter={listingFilter} onBack={() => navigateTo('home')} /></motion.div>}
           {page === 'dashboard' && currentUser && <motion.div key="dashboard" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }}><Dashboard user={currentUser} onLogout={handleLogout} /></motion.div>}
         </AnimatePresence>
       </main>
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onLogin={(_role) => setShowAuthModal(false)} />}
+      {showAuthModal && <AuthModal initialView={authView} onClose={() => setShowAuthModal(false)} onLogin={(_role) => setShowAuthModal(false)} />}
       <SubcategoryModal category={selectedCategory} onClose={() => setSelectedCategory(null)} onSubcategorySelect={handleSubcategorySelect} />
     </div>
   );

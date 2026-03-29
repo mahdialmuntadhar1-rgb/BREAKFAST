@@ -66,16 +66,28 @@ interface BusinessDirectoryProps {
     onBack?: () => void;
 }
 
+const DIRECTORY_STATE_KEY = 'iraq-compass-directory-state';
+
+const readSavedState = () => {
+  try {
+    const raw = sessionStorage.getItem(DIRECTORY_STATE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFilter, onBack }) => {
+  const savedState = readSavedState();
   const [filters, setFilters] = useState({ 
-    category: initialFilter?.categoryId || 'all', 
-    rating: 0,
-    city: initialFilter?.city || '',
-    governorate: initialFilter?.governorate || 'all'
+    category: initialFilter?.categoryId || savedState?.filters?.category || 'all', 
+    rating: savedState?.filters?.rating || 0,
+    city: initialFilter?.city || savedState?.filters?.city || '',
+    governorate: initialFilter?.governorate || savedState?.filters?.governorate || 'all'
   });
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(savedState?.viewMode || 'grid');
   const [pageSize] = useState(20);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(savedState?.page || 0);
   const [businessesData, setBusinessesData] = useState<Business[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,13 +95,18 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   const { t } = useTranslations();
 
   useEffect(() => {
-    setFilters({
-        category: initialFilter?.categoryId || 'all',
-        rating: 0,
-        city: initialFilter?.city || '',
-        governorate: initialFilter?.governorate || 'all'
-    });
+    if (!initialFilter) return;
+    setFilters((prev) => ({
+      ...prev,
+      category: initialFilter?.categoryId || prev.category,
+      city: initialFilter?.city || prev.city,
+      governorate: initialFilter?.governorate || prev.governorate,
+    }));
   }, [initialFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem(DIRECTORY_STATE_KEY, JSON.stringify({ filters, page, viewMode }));
+  }, [filters, page, viewMode]);
 
   const fetchBusinesses = async (isLoadMore = false) => {
     setIsLoading(true);
@@ -125,7 +142,11 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   useEffect(() => {
     setPage(0);
     fetchBusinesses();
-  }, [filters, pageSize]);
+  }, [filters.category, filters.city, filters.governorate, pageSize]);
+
+  const filteredBusinesses = filters.rating > 0
+    ? businessesData.filter((business) => (business.rating || 0) >= filters.rating)
+    : businessesData;
 
   return (
     <section className="py-16">
@@ -207,7 +228,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
           </div>
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
-              <p className="text-white/80">{t('directory.showing')} {businessesData.length} {t('directory.businesses')}</p>
+              <p className="text-white/80">{t('directory.showing')} {filteredBusinesses.length} {t('directory.businesses')}</p>
               <div className="flex items-center gap-2 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-1">
                 <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary' : 'hover:bg-white/10'}`}><Grid3x3 className="w-5 h-5 text-white" /></button>
                 <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary' : 'hover:bg-white/10'}`}><List className="w-5 h-5 text-white" /></button>
@@ -233,7 +254,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                         {t('directory.retry')}
                     </button>
                 </div>
-            ) : businessesData.length === 0 ? (
+            ) : filteredBusinesses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
                         <MapPin className="w-8 h-8 text-white/20" />
@@ -245,7 +266,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                 </div>
             ) : (
                 <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-6' : 'space-y-4'}>
-                    {businessesData.map((business) => (<BusinessCard key={business.id} business={business} viewMode={viewMode} />))}
+                    {filteredBusinesses.map((business) => (<BusinessCard key={business.id} business={business} viewMode={viewMode} />))}
                 </div>
             )}
 

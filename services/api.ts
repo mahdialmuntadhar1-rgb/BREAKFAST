@@ -24,6 +24,22 @@ export const api = {
     };
   },
 
+
+  async getPosts(params: { page?: number; limit?: number } = {}) {
+    const page = params.page ?? 0;
+    const limit = params.limit ?? 20;
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .order('createdAt', { ascending: false })
+      .range(page * limit, (page + 1) * limit - 1);
+
+    if (error) throw error;
+
+    const mapped = (data ?? []).map((post: any) => ({ ...post, createdAt: toDate(post.createdAt) } as Post));
+    return { data: mapped, hasMore: mapped.length === limit, page };
+  },
+
   subscribeToPosts(callback: (posts: Post[]) => void, page = 0, limit = 50) {
     const fetchPage = async () => {
       const { data, error } = await supabase
@@ -93,7 +109,7 @@ export const api = {
     return { success: true, id: data.id };
   },
 
-  async getOrCreateProfile(authUser: { id: string; email?: string; user_metadata?: { full_name?: string; avatar_url?: string } } | null, requestedRole: 'user' | 'owner' = 'user') {
+  async getOrCreateProfile(authUser: { id: string; email?: string; user_metadata?: any } | null, requestedRole: 'user' | 'owner' = 'user') {
     if (!authUser) return null;
 
     const { data: existing, error: fetchError } = await supabase.from('users').select('*').eq('id', authUser.id).maybeSingle();
@@ -111,17 +127,48 @@ export const api = {
       return existing as User;
     }
 
+    const userMetadata = authUser.user_metadata || {};
+    const role = isAdminEmail ? 'admin' : (userMetadata.role || requestedRole);
+
     const profile: User = {
       id: authUser.id,
-      name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+      name: userMetadata.full_name || authUser.email?.split('@')[0] || 'User',
       email: authUser.email || '',
-      avatar: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.id}`,
-      role: isAdminEmail ? 'admin' : requestedRole,
-      businessId: requestedRole === 'owner' ? `b_${authUser.id}` : undefined,
+      avatar: userMetadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.id}`,
+      role,
+      businessId: role === 'owner' ? `b_${authUser.id}` : undefined,
+      preferredLanguage: userMetadata.preferredLanguage || 'en',
+      businessProfile: role === 'owner' ? {
+        businessName: userMetadata.businessName || '',
+        category: userMetadata.businessCategory || '',
+        phone: userMetadata.phone || '',
+        address: userMetadata.address || '',
+        governorate: userMetadata.governorate || '',
+        city: userMetadata.city || '',
+        socialLinks: userMetadata.socialLinks || {},
+      } : undefined,
     };
 
     const { data: inserted, error: insertError } = await supabase.from('users').insert(profile).select('*').single();
     if (insertError) throw insertError;
+
+    if (role === 'owner') {
+      const businessPayload = {
+        id: `b_${authUser.id}`,
+        name: userMetadata.businessName || `${profile.name}'s Business`,
+        category: userMetadata.businessCategory || 'business_services',
+        phone: userMetadata.phone || null,
+        address: userMetadata.address || null,
+        governorate: userMetadata.governorate || null,
+        city: userMetadata.city || null,
+        website: userMetadata.socialLinks?.website || null,
+        status: 'pending',
+        rating: 0,
+      };
+      const { error: businessError } = await supabase.from('businesses').upsert(businessPayload, { onConflict: 'id' });
+      if (businessError) console.error('Failed to create pending business profile:', businessError);
+    }
+
     return inserted as User;
   },
 

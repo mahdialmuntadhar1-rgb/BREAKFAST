@@ -14,6 +14,10 @@ export const PersonalizedEvents: React.FC = () => {
   const { t } = useTranslations();
 
   useEffect(() => {
+    setPage(0);
+  }, [activeTab]);
+
+  useEffect(() => {
     let isMounted = true;
     const timeoutId = setTimeout(() => {
       if (isMounted) setIsLoading(false);
@@ -22,15 +26,17 @@ export const PersonalizedEvents: React.FC = () => {
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        // Map tabs to categories if needed, or just fetch all for now
         const categoryMap: Record<string, string | undefined> = {
-          'forYou': undefined,
-          'trending': 'entertainment',
-          'nearYou': 'food',
-          'friendsGoing': 'business'
+          forYou: undefined,
+          trending: 'entertainment',
+          nearYou: 'food',
+          friendsGoing: 'business',
         };
         const data = await api.getEvents({ category: categoryMap[activeTab], page, limit: 12 });
-        if (isMounted) { setEvents(data); setHasMore(data.length >= 12); }
+        if (isMounted) {
+          setEvents((prev) => (page === 0 ? data : [...prev, ...data]));
+          setHasMore(data.length >= 12);
+        }
       } catch (error) {
         console.error('Error fetching events:', error);
       } finally {
@@ -40,7 +46,9 @@ export const PersonalizedEvents: React.FC = () => {
         }
       }
     };
-    fetchEvents();
+
+    void fetchEvents();
+
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
@@ -50,9 +58,7 @@ export const PersonalizedEvents: React.FC = () => {
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-white mb-8 text-center">
-          {t('events.personalizedTitle')}
-        </h2>
+        <h2 className="text-3xl font-bold text-white mb-8 text-center">{t('events.personalizedTitle')}</h2>
         <div className="flex justify-center gap-3 mb-8 overflow-x-auto scrollbar-hide">
           {['forYou', 'trending', 'nearYou', 'friendsGoing'].map((tab) => (
             <button
@@ -81,7 +87,7 @@ export const PersonalizedEvents: React.FC = () => {
             {events.length === 0 ? (
               <div className="col-span-full py-12 flex flex-col items-center justify-center text-center opacity-50">
                 <Calendar className="w-12 h-12 text-white/20 mb-4" />
-                <p className="text-white/60 text-sm">{t('events.noEvents') || "No events found for this category."}</p>
+                <p className="text-white/60 text-sm">{t('events.noEvents') || 'No events found for this category.'}</p>
               </div>
             ) : (
               events.map((event) => (
