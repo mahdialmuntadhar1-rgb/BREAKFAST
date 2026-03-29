@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import type { Business } from '../types';
 import { Crown, Star, MapPin, Clock, ChevronRight, ChevronLeft } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
+import { useAppState } from '../hooks/useAppState';
 import { GlassCard } from './GlassCard';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -10,6 +11,7 @@ export const FeaturedBusinesses: React.FC = () => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { t, lang } = useTranslations();
+  const { governorate } = useAppState();
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export const FeaturedBusinesses: React.FC = () => {
     const fetchFeatured = async () => {
       setIsLoading(true);
       try {
-        const result = await api.getBusinesses({ featuredOnly: true, limit: 10 });
+        const result = await api.getBusinesses({ featuredOnly: true, limit: 10, governorate });
         if (isMounted) setBusinesses(result.data);
       } catch (error) {
         console.error('Error fetching featured businesses:', error);
@@ -37,7 +39,7 @@ export const FeaturedBusinesses: React.FC = () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, []);
+  }, [governorate]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {

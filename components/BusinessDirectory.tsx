@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { categories, governorates } from '../constants';
 import { api } from '../services/api';
 import type { Business } from '../types';
 import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
+import { useAppState } from '../hooks/useAppState';
 import { GlassCard } from './GlassCard';
 
 interface BusinessCardProps {
@@ -72,25 +72,26 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
     category: initialFilter?.categoryId || 'all', 
     rating: 0,
     city: initialFilter?.city || '',
-    governorate: initialFilter?.governorate || 'all'
+    governorate: initialFilter?.governorate || localStorage.getItem('iraq-compass-governorate') || 'all'
   });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pageSize] = useState(20);
   const [businessesData, setBusinessesData] = useState<Business[]>([]);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(undefined);
+  const [cursor, setCursor] = useState<number | null>(0);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslations();
+  const { governorate: globalGovernorate, setGovernorate: setGlobalGovernorate } = useAppState();
 
   useEffect(() => {
     setFilters({
         category: initialFilter?.categoryId || 'all',
         rating: 0,
         city: initialFilter?.city || '',
-        governorate: initialFilter?.governorate || 'all'
+        governorate: initialFilter?.governorate || globalGovernorate
     });
-  }, [initialFilter]);
+  }, [initialFilter, globalGovernorate]);
 
   const fetchBusinesses = async (isLoadMore = false) => {
     setIsLoading(true);
@@ -106,12 +107,12 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
             category: filters.category,
             city: filters.city,
             governorate: filters.governorate,
-            lastDoc: isLoadMore ? lastDoc : undefined,
+            cursor: isLoadMore ? (cursor ?? 0) : 0,
             limit: pageSize
         });
         
         setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
-        setLastDoc(result.lastDoc);
+        setCursor(result.nextCursor);
         setHasMore(result.hasMore);
     } catch (err) {
         console.error('Error fetching businesses:', err);
@@ -148,7 +149,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
             <GlassCard className="p-6">
               <h3 className="text-white font-semibold mb-4 flex items-center justify-between">
                 {t('directory.filters')}
-                <button onClick={() => setFilters({ category: 'all', rating: 0, city: '', governorate: 'all' })} className="text-xs text-secondary hover:text-secondary/80">
+                <button onClick={() => { setFilters({ category: 'all', rating: 0, city: '', governorate: 'all' }); setGlobalGovernorate('all'); }} className="text-xs text-secondary hover:text-secondary/80">
                   {t('directory.reset')}
                 </button>
               </h3>
@@ -180,7 +181,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                 <label className="block text-white/80 text-sm mb-2">{t('directory.governorate')}</label>
                 <select 
                   value={filters.governorate} 
-                  onChange={(e) => setFilters({ ...filters, governorate: e.target.value })} 
+                  onChange={(e) => { setFilters({ ...filters, governorate: e.target.value }); setGlobalGovernorate(e.target.value); }} 
                   className="w-full px-4 py-3 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white outline-none appearance-none bg-no-repeat bg-right-4" 
                   style={{backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'left 0.75rem center', backgroundSize: '1.5em 1.5em'}}
                 >
