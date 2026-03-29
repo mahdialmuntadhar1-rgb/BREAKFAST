@@ -2,6 +2,8 @@ import React from 'react';
 import { stories } from '../constants';
 import { useTranslations } from '../hooks/useTranslations';
 import { Check, Plus } from './icons';
+import { StoryViewer } from './StoryViewer';
+import type { Story } from '../types';
 
 const AddStoryButton = () => {
     const { t } = useTranslations();
@@ -18,12 +20,13 @@ const AddStoryButton = () => {
 }
 
 export const StoriesRing: React.FC = () => {
+    const [activeStory, setActiveStory] = React.useState<Story | null>(null);
     return (
         <div className="relative -mt-12 z-20">
             <div className="container mx-auto px-4">
                 <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                     {stories.map((story) => (
-                        <div key={story.id} className="flex-shrink-0">
+                        <div key={story.id} className="flex-shrink-0" onClick={() => setActiveStory(story as Story)}>
                             <div className={`relative w-20 h-20 rounded-full p-0.5 ${story.viewed ? 'bg-white/20' : 'bg-gradient-to-tr from-primary via-accent to-secondary'}`}>
                                 <div className="w-full h-full rounded-full backdrop-blur-xl bg-dark-bg/80 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform p-1">
                                     <img 
@@ -46,6 +49,7 @@ export const StoriesRing: React.FC = () => {
                     <AddStoryButton />
                 </div>
             </div>
+            {activeStory && <StoryViewer story={activeStory} onClose={() => setActiveStory(null)} />}
         </div>
     );
 };

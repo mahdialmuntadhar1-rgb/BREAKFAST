@@ -11,13 +11,15 @@ import { CommunityStories } from './CommunityStories';
 import { CityGuide } from './CityGuide';
 import { InclusiveFeatures } from './InclusiveFeatures';
 import { FooterSection } from './FooterSection';
-import { useTranslations } from '../hooks/useTranslations';
 import type { Post, Category } from '../types';
 
 interface HomePageProps {
   posts: Post[];
   isSocialLoading: boolean;
+  postsHasMore: boolean;
+  onLoadMorePosts: () => void;
   isLoggedIn: boolean;
+  onProtectedAction: () => void;
   onCategoryClick: (category: Category) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
@@ -31,7 +33,10 @@ interface HomePageProps {
 export const HomePage: React.FC<HomePageProps> = ({
   posts,
   isSocialLoading,
+  postsHasMore,
+  onLoadMorePosts,
   isLoggedIn,
+  onProtectedAction,
   onCategoryClick,
   currentPage,
   setCurrentPage,
@@ -40,49 +45,34 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGovernorateChange,
   highContrast,
   setHighContrast,
-}) => {
-  const { t } = useTranslations();
+}) => (
+  <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
+    <HeroSection onExploreNow={() => document.getElementById('categories-section')?.scrollIntoView({ behavior: 'smooth' })} onLearnMore={() => document.getElementById('featured-section')?.scrollIntoView({ behavior: 'smooth' })} />
+    <StoriesRing />
 
-  return (
-    <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
-      <HeroSection />
-      <StoriesRing />
-      
-      <CategoriesSection 
-        onCategoryClick={onCategoryClick} 
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-      />
-
-      <div className="container mx-auto px-4 py-24 relative">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-              <BusinessGridSection 
-                posts={posts} 
-                isLoading={isSocialLoading} 
-                isLoggedIn={isLoggedIn} 
-              />
-              
-              <SearchSection 
-                onSearch={onSearch} 
-                selectedGovernorate={selectedGovernorate}
-                onGovernorateChange={onGovernorateChange}
-              />
-          </div>
-      </div>
-
-      <FeaturedSection />
-      
-      <div className="space-y-32 py-24">
-        <PersonalizedEvents />
-        <DealsMarketplace />
-        <CommunityStories />
-        <CityGuide />
-      </div>
-
-      <InclusiveFeatures highContrast={highContrast} setHighContrast={setHighContrast} />
-      
-      <FooterSection />
+    <div id="categories-section">
+      <CategoriesSection onCategoryClick={onCategoryClick} currentPage={currentPage} setCurrentPage={setCurrentPage} />
     </div>
-  );
-};
 
+    <div className="container mx-auto px-4 py-24 relative">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+        <BusinessGridSection posts={posts} isLoading={isSocialLoading} isLoggedIn={isLoggedIn} postsHasMore={postsHasMore} onLoadMorePosts={onLoadMorePosts} onProtectedAction={onProtectedAction} />
+        <SearchSection onSearch={onSearch} selectedGovernorate={selectedGovernorate} onGovernorateChange={onGovernorateChange} />
+      </div>
+    </div>
+
+    <div id="featured-section">
+      <FeaturedSection />
+    </div>
+
+    <div className="space-y-32 py-24">
+      <PersonalizedEvents selectedGovernorate={selectedGovernorate} />
+      <DealsMarketplace selectedGovernorate={selectedGovernorate} />
+      <CommunityStories selectedGovernorate={selectedGovernorate} />
+      <CityGuide />
+    </div>
+
+    <InclusiveFeatures highContrast={highContrast} setHighContrast={setHighContrast} />
+    <FooterSection />
+  </div>
+);

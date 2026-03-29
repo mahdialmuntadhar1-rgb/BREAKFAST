@@ -38,6 +38,7 @@ export interface Business {
   nameAr?: string;
   nameKu?: string;
   imageUrl?: string;
+  image?: string;
   coverImage?: string;
   isPremium?: boolean;
   isFeatured?: boolean;
