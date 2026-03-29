@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 
 export const FeaturedSection: React.FC = () => {
     return (
-        <motion.section 
+        <motion.section id="featured-section" 
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
