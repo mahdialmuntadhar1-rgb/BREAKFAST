@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
 import { Navigation, Mic, Trash2, Sparkles } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { GlassCard } from './GlassCard';
@@ -52,42 +51,13 @@ export const CityGuide: React.FC<CityGuideProps> = ({ onGovernorateSelect }) => 
       setJourneyPoints([]);
       
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
-        const response = await ai.models.generateContent({
-           model: "gemini-3-flash-preview",
-           contents: `Create a travel itinerary for the following request: "${searchQuery}". The trip should be in Iraq. Provide a list of waypoints.`,
-           config: {
-             responseMimeType: "application/json",
-             responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    waypoints: {
-                        type: Type.ARRAY,
-                        items: {
-                          type: Type.OBJECT,
-                          properties: {
-                            name: {
-                              type: Type.STRING,
-                              description: 'The name of the location or waypoint.',
-                            },
-                            address: {
-                              type: Type.STRING,
-                              description: 'A short address or description of the location.',
-                            },
-                          },
-                          required: ["name", "address"],
-                        },
-                    }
-                },
-                required: ["waypoints"],
-              },
-           },
-        });
-
-        const jsonStr = response.text.trim();
-        const plan = JSON.parse(jsonStr);
-        setJourneyPoints(plan.waypoints);
-          
+        const seed = searchQuery.trim();
+        const fallbackWaypoints: Waypoint[] = [
+          { name: seed, address: 'Baghdad, Iraq' },
+          { name: `${seed} - Cultural Stop`, address: 'Erbil Citadel, Erbil' },
+          { name: `${seed} - Local Experience`, address: 'Old Basra District, Basra' },
+        ];
+        setJourneyPoints(fallbackWaypoints);
       } catch (e) {
           console.error("Failed to generate journey:", e);
           setError(t('cityGuide.generateError'));
