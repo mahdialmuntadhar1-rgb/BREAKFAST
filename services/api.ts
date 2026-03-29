@@ -154,13 +154,12 @@ export const api = {
                     isVerified: d.isVerified ?? d.verified ?? false
                 } as Business;
             });
-            const mergedData = data.length > 0 ? data : mockData.businesses;
             const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
             return {
-                data: mergedData.slice(0, pageSize),
+                data,
                 lastDoc: lastVisible,
-                hasMore: mergedData.length === pageSize
+                hasMore: data.length === pageSize
             };
         } catch (error) {
             handleFirestoreError(error, OperationType.GET, path);
@@ -191,8 +190,7 @@ export const api = {
                 postsMap.set(post.id, post);
             });
             
-            const livePosts = Array.from(postsMap.values());
-            callback(livePosts.length > 0 ? livePosts : (mockData.posts || []));
+            callback(Array.from(postsMap.values()));
         }, (error) => {
             handleFirestoreError(error, OperationType.GET, path);
             callback(mockData.posts || []);
@@ -205,8 +203,7 @@ export const api = {
         try {
             const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(10));
             const snapshot = await getDocs(q);
-            const liveDeals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            return liveDeals.length > 0 ? liveDeals : (mockData.deals || []);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
         } catch (error) {
             handleFirestoreError(error, OperationType.GET, path);
             return mockData.deals || [];
@@ -219,8 +216,7 @@ export const api = {
         try {
             const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(20));
             const snapshot = await getDocs(q);
-            const liveStories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            return liveStories.length > 0 ? liveStories : (mockData.stories || []);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
         } catch (error) {
             handleFirestoreError(error, OperationType.GET, path);
             return mockData.stories || [];
@@ -245,7 +241,7 @@ export const api = {
                 q = query(q, where('governorate', '==', params.governorate));
             }
             const snapshot = await getDocs(q);
-            const liveEvents = snapshot.docs.map(doc => {
+            return snapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
                     id: doc.id,
@@ -253,7 +249,6 @@ export const api = {
                     date: data.date ? (data.date as Timestamp).toDate() : new Date()
                 } as any;
             });
-            return liveEvents.length > 0 ? liveEvents : (mockData.events || []);
         } catch (error) {
             handleFirestoreError(error, OperationType.GET, path);
             return mockData.events || [];

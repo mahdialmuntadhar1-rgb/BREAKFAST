@@ -11,9 +11,10 @@ import { motion, AnimatePresence } from 'motion/react';
 interface BusinessCardProps {
   business: Business;
   viewMode: 'grid' | 'list';
+  onClick?: (business: Business) => void;
 }
 
-const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
+const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode, onClick }) => {
   const { t, lang } = useTranslations();
   
   const displayName = lang === 'ar' && business.nameAr ? business.nameAr : 
@@ -26,7 +27,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
 
   if (viewMode === 'list') {
     return (
-      <GlassCard className="p-4 flex gap-4 text-start rtl:text-right">
+      <GlassCard className="p-4 flex gap-4 text-start rtl:text-right cursor-pointer hover:border-primary/30 transition-all" onClick={() => onClick?.(business)}>
         <img src={displayImage} alt={displayName} className="w-24 h-24 rounded-xl object-cover flex-shrink-0" />
         <div className="flex-1">
           <h3 className="text-white font-semibold text-lg mb-1">{displayName}</h3>
@@ -38,14 +39,14 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
         </div>
         <div className="flex flex-col justify-center gap-2">
           <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-medium text-sm">{t('directory.view')}</button>
-          <button className="px-4 py-2 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white font-medium text-sm">{t('directory.contact')}</button>
+          <button className="px-4 py-2 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white font-medium text-sm" onClick={(e) => { e.stopPropagation(); /* Handle contact */ }}>{t('directory.contact')}</button>
         </div>
       </GlassCard>
     );
   }
 
   return (
-    <GlassCard className="overflow-hidden group text-start p-0">
+    <GlassCard className="overflow-hidden group text-start p-0 cursor-pointer hover:border-primary/30 transition-all" onClick={() => onClick?.(business)}>
       <div className="relative h-48 overflow-hidden">
         <img src={displayImage} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
         {isVerified && <div className="absolute top-3 end-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center"><CheckCircle className="w-5 h-5 text-dark-bg" /></div>}
@@ -66,9 +67,10 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
 interface BusinessDirectoryProps {
     initialFilter?: { categoryId?: string; city?: string; governorate?: string };
     onBack?: () => void;
+    onBusinessClick?: (business: Business) => void;
 }
 
-export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFilter, onBack }) => {
+export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFilter, onBack, onBusinessClick }) => {
   const [filters, setFilters] = useState({ 
     category: initialFilter?.categoryId || 'all', 
     rating: 0,
@@ -340,7 +342,11 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index % 10 * 0.05 }}
                             >
-                                <BusinessCard business={business} viewMode={viewMode} />
+                                <BusinessCard 
+                                    business={business} 
+                                    viewMode={viewMode} 
+                                    onClick={onBusinessClick}
+                                />
                             </motion.div>
                         ))}
                     </div>

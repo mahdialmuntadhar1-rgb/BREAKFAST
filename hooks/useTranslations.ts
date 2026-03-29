@@ -46,10 +46,10 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 for (const fk of keys) {
                     fallbackResult = fallbackResult?.[fk];
                 }
-                return fallbackResult || '';
+                return fallbackResult || key;
             }
         }
-        return result || '';
+        return result || key;
     }, [lang]);
 
     // FIX: Replaced JSX with React.createElement to be compatible with a .ts file extension.

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { BusinessDirectory } from './components/BusinessDirectory';
+import { BusinessProfile } from './components/BusinessProfile';
 import { AuthModal } from './components/AuthModal';
 import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
@@ -8,11 +9,11 @@ import { HomePage } from './components/HomePage';
 import { api } from './services/api';
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import type { User, Category, Subcategory, Post } from './types';
+import type { User, Category, Subcategory, Post, Business } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
 
-import { translations, mockUser } from './constants';
+import { translations } from './constants';
 
 const getTranslation = (key: string) => {
   const lang = (localStorage.getItem('iraq-compass-lang') as 'en' | 'ar' | 'ku') || 'en';
@@ -76,8 +77,9 @@ const MainContent: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [page, setPage] = useState<'home' | 'dashboard' | 'listing'>('home');
+  const [page, setPage] = useState<'home' | 'dashboard' | 'listing' | 'business-profile'>('home');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [listingFilter, setListingFilter] = useState<{ categoryId?: string; city?: string; governorate?: string } | null>(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState('all');
@@ -167,32 +169,18 @@ const MainContent: React.FC = () => {
   }, [highContrast]);
 
   const handleLogin = (role: 'user' | 'owner') => {
-    // The modal currently completes a local signup flow.
-    // We create a safe local session so dashboard access is not blocked.
-    const sessionUser: User = {
-      ...mockUser,
-      id: `local_${Date.now()}`,
-      role,
-      businessId: role === 'owner' ? `b_local_${Date.now()}` : null,
-    };
-    setCurrentUser(sessionUser);
-    setIsLoggedIn(true);
-    setPage('dashboard');
+    // Auth is handled in AuthModal via signInWithPopup, 
+    // which triggers onAuthStateChanged above.
+    // We store the role in sessionStorage to be picked up by the listener.
     sessionStorage.setItem('pending_role', role);
     setShowAuthModal(false);
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.warn('Sign out fallback to local session clear:', err);
-    } finally {
-      sessionStorage.removeItem('pending_role');
-      setIsLoggedIn(false);
-      setCurrentUser(null);
-      setPage('home');
-    }
+    await signOut(auth);
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    setPage('home');
   };
   
   const navigateTo = (targetPage: 'home' | 'dashboard') => {
@@ -250,6 +238,11 @@ const MainContent: React.FC = () => {
     }
   };
 
+  const handleBusinessClick = (business: Business) => {
+    setSelectedBusiness(business);
+    setPage('business-profile');
+  };
+
   if (!isAuthReady) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
@@ -305,8 +298,25 @@ const MainContent: React.FC = () => {
                 <BusinessDirectory 
                     initialFilter={listingFilter} 
                     onBack={() => navigateTo('home')} 
+                    onBusinessClick={handleBusinessClick}
                 />
               </motion.div>
+          )}
+          {page === 'business-profile' && selectedBusiness && (
+            <motion.div
+              key="business-profile"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <BusinessProfile 
+                business={selectedBusiness} 
+                posts={posts}
+                onBack={() => setPage('listing')}
+                isLoggedIn={isLoggedIn}
+              />
+            </motion.div>
           )}
           {page === 'dashboard' && (
             <motion.div

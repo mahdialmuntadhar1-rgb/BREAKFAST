@@ -138,7 +138,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({
 
                                 {/* Content */}
                                 <div className="p-6">
-                                    <p className="text-white/90 text-lg leading-relaxed font-medium tracking-tight">
+                                    <p className="text-white/90 text-lg leading-relaxed font-medium tracking-tight line-clamp-3 group-hover:line-clamp-none transition-all duration-500">
                                         {post.caption}
                                     </p>
                                 </div>

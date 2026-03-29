@@ -1,5 +1,6 @@
 import React from 'react';
 import { HeroSection } from './HeroSection';
+import { GovernorateSelection } from './GovernorateSelection';
 import { StoriesRing } from './StoriesRing';
 import { CategoriesSection } from './CategoriesSection';
 import { BusinessGridSection } from './BusinessGridSection';
@@ -19,6 +20,7 @@ interface HomePageProps {
   isSocialLoading: boolean;
   isLoggedIn: boolean;
   onCategoryClick: (category: Category) => void;
+  onBusinessClick: (business: any) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   onSearch: (query: string) => void;
@@ -34,6 +36,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   isSocialLoading,
   isLoggedIn,
   onCategoryClick,
+  onBusinessClick,
   currentPage,
   setCurrentPage,
   onSearch,
@@ -47,7 +50,13 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   return (
     <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
-      <HeroSection onExplore={() => onSeeAll('businesses')} />
+      <HeroSection onExplore={() => onSeeAll('businesses')} onBusinessClick={onBusinessClick} />
+      
+      <GovernorateSelection 
+        selectedGovernorate={selectedGovernorate}
+        onGovernorateChange={onGovernorateChange}
+      />
+
       <StoriesRing />
       
       <CategoriesSection 
