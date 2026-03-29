@@ -53,10 +53,10 @@ export const HeroSection: React.FC = () => {
                             {t(heroSlides[activeSlide].subtitleKey)}
                         </p>
                         <div className="flex flex-wrap gap-4 justify-center">
-                            <button className="px-8 py-4 rounded-full bg-primary text-white font-semibold hover:shadow-glow-primary transition-all duration-300 transform hover:scale-105">
+                            <button onClick={() => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 rounded-full bg-primary text-white font-semibold hover:shadow-glow-primary transition-all duration-300 transform hover:scale-105">
                                 {t('actions.exploreNow') || 'Explore Now'}
                             </button>
-                            <button className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-300">
+                            <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-300">
                                 {t('actions.learnMore') || 'Learn More'}
                             </button>
                         </div>
