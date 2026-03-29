@@ -43,11 +43,22 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const { t } = useTranslations();
 
+  const SectionIntro = ({ title, subtitle }: { title: string; subtitle: string }) => (
+    <div className="container mx-auto px-4 mb-8 flex items-end justify-between gap-4">
+      <div>
+        <h2 className="text-3xl font-bold text-white">{title}</h2>
+        <p className="text-white/55 text-sm mt-2">{subtitle}</p>
+      </div>
+      <button className="text-primary hover:text-secondary transition-colors text-sm cursor-pointer">See all</button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
       <HeroSection />
       <StoriesRing />
       
+      <SectionIntro title="Trending categories" subtitle="Start with what people across Iraq are searching for most." />
       <CategoriesSection 
         onCategoryClick={onCategoryClick} 
         currentPage={currentPage}
@@ -70,10 +81,13 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
       </div>
 
+      <SectionIntro title="Featured businesses" subtitle="Premium picks updated daily from trusted local brands." />
       <FeaturedSection />
       
       <div className="space-y-32 py-24">
+        <SectionIntro title="Events" subtitle="Don’t miss upcoming gatherings around your city." />
         <PersonalizedEvents />
+        <SectionIntro title="Deals" subtitle="Best offers tailored for where you are browsing." />
         <DealsMarketplace />
         <CommunityStories />
         <CityGuide />

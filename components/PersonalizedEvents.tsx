@@ -10,6 +10,7 @@ export const PersonalizedEvents: React.FC = () => {
   const [activeTab, setActiveTab] = useState('forYou');
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(3);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -29,7 +30,10 @@ export const PersonalizedEvents: React.FC = () => {
           'friendsGoing': 'business'
         };
         const data = await api.getEvents({ category: categoryMap[activeTab] });
-        if (isMounted) setEvents(data);
+        if (isMounted) {
+          setEvents(data);
+          setVisibleCount(3);
+        }
       } catch (error) {
         console.error('Error fetching events:', error);
       } finally {
@@ -80,7 +84,7 @@ export const PersonalizedEvents: React.FC = () => {
                 </p>
               </div>
             ) : (
-              events.map((event, index) => (
+              events.slice(0, visibleCount).map((event, index) => (
                 <motion.div
                     key={event.id}
                     initial={{ opacity: 0, y: 30 }}
@@ -150,6 +154,19 @@ export const PersonalizedEvents: React.FC = () => {
                 </motion.div>
               ))
             )}
+          </div>
+        )}
+
+        {events.length > 0 && (
+          <div className="mt-10 space-y-3">
+            {visibleCount < events.length ? (
+              <button onClick={() => setVisibleCount((prev) => prev + 3)} className="w-full py-4 rounded-2xl bg-gradient-to-r from-secondary to-primary text-white font-bold hover:-translate-y-0.5 transition-all cursor-pointer">
+                Load more events
+              </button>
+            ) : (
+              <p className="text-center text-white/50">You reached the end</p>
+            )}
+            <p className="text-center text-xs uppercase tracking-widest text-white/40">Events in your selected governorate</p>
           </div>
         )}
       </div>

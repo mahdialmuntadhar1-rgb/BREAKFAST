@@ -6,8 +6,6 @@ import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
 import { HomePage } from './components/HomePage';
 import { api } from './services/api';
-import { auth } from './firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User, Category, Subcategory, Post } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
@@ -74,7 +72,6 @@ const MainContent: React.FC = () => {
   const { t } = useTranslations();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [page, setPage] = useState<'home' | 'dashboard' | 'listing'>('home');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -92,51 +89,17 @@ const MainContent: React.FC = () => {
   });
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!isMounted) return;
-      
+    const savedUser = localStorage.getItem('iraq-compass-user');
+    if (savedUser) {
       try {
-        if (firebaseUser) {
-          // Retrieve the role from sessionStorage if it was set during the AuthModal flow
-          const pendingRole = sessionStorage.getItem('pending_role') as 'user' | 'owner' | null;
-          const user = await api.getOrCreateProfile(firebaseUser, pendingRole || 'user');
-          if (isMounted) {
-            setCurrentUser(user);
-            setIsLoggedIn(!!user);
-          }
-          sessionStorage.removeItem('pending_role');
-        } else {
-          if (isMounted) {
-            setCurrentUser(null);
-            setIsLoggedIn(false);
-          }
-        }
+        const parsed = JSON.parse(savedUser) as User;
+        setCurrentUser(parsed);
+        setIsLoggedIn(true);
       } catch (err) {
-        console.error("Auth state change error:", err);
-      } finally {
-        if (isMounted) {
-          setIsAuthReady(true);
-        }
+        console.error('Failed to restore session:', err);
       }
-    });
-
-    // Safety timeout: If Firebase doesn't respond within 4 seconds, 
-    // we proceed to the app anyway to avoid a stuck loading screen.
-    const timeoutId = setTimeout(() => {
-      if (isMounted && !isAuthReady) {
-        console.warn("Auth initialization timed out. Proceeding...");
-        setIsAuthReady(true);
-      }
-    }, 4000);
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-      clearTimeout(timeoutId);
-    };
-  }, [isAuthReady]);
+    }
+  }, []);
 
   useEffect(() => {
     setIsSocialLoading(true);
@@ -167,15 +130,23 @@ const MainContent: React.FC = () => {
   }, [highContrast]);
 
   const handleLogin = (role: 'user' | 'owner') => {
-    // Auth is handled in AuthModal via signInWithPopup, 
-    // which triggers onAuthStateChanged above.
-    // We store the role in sessionStorage to be picked up by the listener.
-    sessionStorage.setItem('pending_role', role);
+    const profile: User = {
+      id: `local-${Date.now()}`,
+      name: role === 'owner' ? 'Business Owner' : 'Explorer',
+      email: role === 'owner' ? 'owner@iraqcompass.app' : 'user@iraqcompass.app',
+      avatar: role === 'owner'
+        ? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80'
+        : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
+      role
+    };
+    setCurrentUser(profile);
+    setIsLoggedIn(true);
+    localStorage.setItem('iraq-compass-user', JSON.stringify(profile));
     setShowAuthModal(false);
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    localStorage.removeItem('iraq-compass-user');
     setIsLoggedIn(false);
     setCurrentUser(null);
     setPage('home');
@@ -219,14 +190,6 @@ const MainContent: React.FC = () => {
         setListingFilter(prev => ({ ...prev, governorate: gov !== 'all' ? gov : undefined }));
     }
   };
-
-  if (!isAuthReady) {
-    return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">

@@ -10,6 +10,7 @@ export const CommunityStories: React.FC = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(8);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export const CommunityStories: React.FC = () => {
       try {
         const data = await api.getStories();
         setStories(data);
+        setVisibleCount(8);
       } catch (error) {
         console.error('Error fetching stories:', error);
       } finally {
@@ -68,7 +70,7 @@ export const CommunityStories: React.FC = () => {
               <p className="text-white text-xs font-black uppercase tracking-widest">{t('stories.noStories') || "No stories shared yet."}</p>
             </div>
           ) : (
-            stories.map((story, index) => (
+            stories.slice(0, visibleCount).map((story, index) => (
             <motion.div 
                 key={story.id} 
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -134,6 +136,19 @@ export const CommunityStories: React.FC = () => {
             </div>
           </motion.div>
         </div>
+
+        {stories.length > 0 && (
+          <div className="mt-8 space-y-3">
+            {visibleCount < stories.length ? (
+              <button onClick={() => setVisibleCount((prev) => prev + 6)} className="w-full py-4 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition-all cursor-pointer">
+                Load more stories
+              </button>
+            ) : (
+              <p className="text-center text-white/50">You reached the end</p>
+            )}
+            <p className="text-center text-xs uppercase tracking-widest text-white/40">Stories in your city</p>
+          </div>
+        )}
       </div>
       {activeStory && <StoryViewer story={activeStory} onClose={() => setActiveStory(null)} />}
     </section>

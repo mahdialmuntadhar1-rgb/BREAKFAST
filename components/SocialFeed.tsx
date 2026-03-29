@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { Post } from '../types';
 
 interface SocialFeedProps {
+    contextTitle?: string;
     posts: Post[];
     isLoading?: boolean;
     isLoggedIn?: boolean;
@@ -14,9 +15,13 @@ interface SocialFeedProps {
     onShare?: (postId: string) => void;
 }
 
-export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLoggedIn, onLike, onComment, onShare }) => {
+export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLoggedIn, onLike, onComment, onShare, contextTitle }) => {
+    const [visibleCount, setVisibleCount] = useState(4);
     const { t, lang } = useTranslations();
     const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+
+    const displayedPosts = posts.slice(0, visibleCount);
+    const hasMore = visibleCount < posts.length;
 
     const handleLike = (postId: string) => {
         const newLikedPosts = new Set(likedPosts);
@@ -68,7 +73,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                         </p>
                     </motion.div>
                 ) : (
-                    posts.map((post, index) => (
+                    displayedPosts.map((post, index) => (
                         <motion.div
                             key={post.id}
                             initial={{ opacity: 0, y: 30 }}
@@ -176,6 +181,25 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                     ))
                 )}
             </AnimatePresence>
+        
+            {posts.length > 0 && (
+                <div className="mt-8 space-y-4">
+                    {hasMore ? (
+                        <button
+                            onClick={() => setVisibleCount((prev) => prev + 4)}
+                            className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:shadow-glow-primary hover:-translate-y-0.5 transition-all cursor-pointer"
+                        >
+                            Load more posts
+                        </button>
+                    ) : (
+                        <p className="text-center text-white/50 text-sm py-2">You reached the end</p>
+                    )}
+                    <p className="text-center text-white/40 text-xs uppercase tracking-widest">
+                        {contextTitle || 'Recent posts in your city'}
+                    </p>
+                </div>
+            )}
+
         </div>
     );
 };

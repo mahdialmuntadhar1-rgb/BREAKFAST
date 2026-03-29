@@ -55,7 +55,7 @@ export const HeroSection: React.FC = () => {
                             <span className="tracking-wider uppercase">{t('hero.badge') || 'AI-Powered Discovery'}</span>
                         </motion.div>
 
-                        <h1 className="text-5xl lg:text-8xl font-bold mb-6 text-white tracking-tight leading-tight">
+                        <h1 className="text-5xl lg:text-8xl font-black mb-6 text-white tracking-tight leading-tight">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent drop-shadow-2xl">
                                 {t(heroSlides[activeSlide].titleKey)}
                             </span>
@@ -68,21 +68,21 @@ export const HeroSection: React.FC = () => {
                             <button className="group relative px-10 py-4 rounded-full bg-primary text-white font-bold overflow-hidden transition-all duration-300 hover:shadow-glow-primary hover:scale-105 active:scale-95">
                                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                 <span className="relative z-10 flex items-center gap-2">
-                                    {t('actions.exploreNow') || 'Explore Now'}
+                                    Explore businesses
                                     <motion.span animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>→</motion.span>
                                 </span>
                             </button>
                             <button className="px-10 py-4 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 text-white font-semibold hover:bg-white/10 hover:border-white/20 transition-all duration-300 active:scale-95">
-                                {t('actions.learnMore') || 'Learn More'}
+                                Join / Sign up
                             </button>
                         </div>
 
                         {/* Mini Stats Row */}
                         <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-3xl mx-auto pt-8 border-t border-white/5">
                             {[
-                                { label: t('stats.businesses') || 'Businesses', value: '12,000+' },
-                                { label: t('stats.cities') || 'Cities', value: '18' },
-                                { label: t('stats.categories') || 'Categories', value: '45+' }
+                                { label: 'businesses', value: '6000+' },
+                                { label: 'governorates', value: '18' },
+                                { label: 'active categories', value: '45+' }
                             ].map((stat, i) => (
                                 <motion.div 
                                     key={i}

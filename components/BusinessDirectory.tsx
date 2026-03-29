@@ -3,7 +3,7 @@ import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { categories, governorates } from '../constants';
 import { api } from '../services/api';
 import type { Business } from '../types';
-import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft } from './icons';
+import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft, Phone, BadgeCheck } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { GlassCard } from './GlassCard';
 
@@ -22,6 +22,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
   const displayImage = business.imageUrl || business.image || business.coverImage || 'https://picsum.photos/seed/placeholder/400/300';
   const displayReviews = business.reviewCount ?? business.reviews ?? 0;
   const isVerified = business.isVerified ?? false;
+  const badgeLabel = business.isFeatured ? 'Featured' : 'New';
 
   if (viewMode === 'list') {
     return (
@@ -44,19 +45,23 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
   }
 
   return (
-    <GlassCard className="overflow-hidden group text-start p-0">
+    <GlassCard className="overflow-hidden group text-start p-0 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
       <div className="relative h-48 overflow-hidden">
         <img src={displayImage} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
         {isVerified && <div className="absolute top-3 end-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center"><CheckCircle className="w-5 h-5 text-dark-bg" /></div>}
+        <span className="absolute top-3 start-3 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-black/60 border border-white/20 text-white">{badgeLabel}</span>
       </div>
       <div className="p-5">
         <h3 className="text-white font-semibold text-lg mb-2">{displayName}</h3>
         <p className="text-white/60 text-sm mb-3">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white font-medium">{business.rating}</span><span className="text-white/60 text-sm">({displayReviews})</span></div>
-          <div className="flex items-center gap-1 text-white/60 text-sm"><MapPin className="w-4 h-4" />{business.distance || '1.2'} km</div>
+          <div className="flex items-center gap-1 text-white/60 text-sm"><MapPin className="w-4 h-4" />{business.city || business.governorate || 'Baghdad'}</div>
         </div>
-        <button className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary transition-all">{t('directory.viewProfile')}</button>
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <button className="py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary transition-all cursor-pointer">View</button>
+          <button className="py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition-all cursor-pointer inline-flex items-center justify-center gap-2"><Phone className="w-4 h-4" />Call</button>
+        </div>
       </div>
     </GlassCard>
   );
@@ -139,9 +144,12 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                     <span className="hidden md:inline">{t('header.backToHome')}</span>
                 </button>
             )}
-            <h2 className="text-3xl font-bold text-white text-center">
-                {t('directory.title')}
-            </h2>
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-white text-center">
+                {filters.category !== 'all' ? `${t(categories.find(c => c.id === filters.category)?.nameKey || filters.category)} in ${filters.governorate !== 'all' ? t(governorates.find(g => g.id === filters.governorate)?.nameKey || filters.governorate) : 'Iraq'}` : t('directory.title')}
+              </h2>
+              <p className="text-white/55 mt-2 text-sm">Browse with saved filters — they stay applied while exploring.</p>
+            </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1 space-y-4 text-start rtl:text-right">
@@ -206,7 +214,12 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
           </div>
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
-              <p className="text-white/80">{t('directory.showing')} {businessesData.length} {t('directory.businesses')}</p>
+              <div>
+                <p className="text-white/80">{t('directory.showing')} {businessesData.length} {t('directory.businesses')}</p>
+                {filters.governorate !== 'all' && (
+                  <span className="inline-flex mt-2 items-center gap-1 px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-semibold"><BadgeCheck className="w-3.5 h-3.5" />{t(governorates.find(g => g.id === filters.governorate)?.nameKey || filters.governorate)}</span>
+                )}
+              </div>
               <div className="flex items-center gap-2 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-1">
                 <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary' : 'hover:bg-white/10'}`}><Grid3x3 className="w-5 h-5 text-white" /></button>
                 <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary' : 'hover:bg-white/10'}`}><List className="w-5 h-5 text-white" /></button>
@@ -239,7 +252,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                     </div>
                     <h3 className="text-white font-semibold text-lg mb-2">{t('directory.noResultsTitle')}</h3>
                     <p className="text-white/60 text-sm max-w-xs mx-auto">
-                        {t('directory.noResultsDesc')}
+                        No businesses found for this filter. Be the first to add a business.
                     </p>
                 </div>
             ) : (
@@ -248,17 +261,19 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                 </div>
             )}
 
-            {hasMore && (
-                <div className="mt-12 flex items-center justify-center">
-                    <button 
-                        disabled={isLoading}
-                        onClick={() => fetchBusinesses(true)}
-                        className="px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary disabled:opacity-50 transition-all"
-                    >
-                        {isLoading ? t('directory.loading') : t('directory.loadMore')}
-                    </button>
-                </div>
-            )}
+            <div className="mt-12">
+              {hasMore ? (
+                <button 
+                    disabled={isLoading}
+                    onClick={() => fetchBusinesses(true)}
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:shadow-glow-primary disabled:opacity-60 transition-all cursor-pointer"
+                >
+                    {isLoading ? t('directory.loading') : 'Explore more businesses'}
+                </button>
+              ) : businessesData.length > 0 ? (
+                <p className="text-center text-white/50">You reached the end</p>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

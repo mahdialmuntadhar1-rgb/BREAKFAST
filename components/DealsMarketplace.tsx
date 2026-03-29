@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export const DealsMarketplace: React.FC = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(3);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -40,7 +41,11 @@ export const DealsMarketplace: React.FC = () => {
   if (isLoading) {
     return (
       <div className="py-16 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl px-4">
+          {[1,2,3].map((item) => (
+            <div key={item} className="h-72 rounded-3xl border border-white/10 bg-white/5 animate-pulse" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -60,7 +65,7 @@ export const DealsMarketplace: React.FC = () => {
               <p className="text-white/60 text-sm">{t('deals.noDeals') || "No active deals at the moment."}</p>
             </div>
           ) : (
-            deals.map((deal, index) => (
+            deals.slice(0, visibleCount).map((deal, index) => (
             <motion.div 
               key={deal.id}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -131,6 +136,18 @@ export const DealsMarketplace: React.FC = () => {
             </motion.div>
           )))}
         </div>
+        {deals.length > 0 && (
+          <div className="mt-10 space-y-3">
+            {visibleCount < deals.length ? (
+              <button onClick={() => setVisibleCount((prev) => prev + 3)} className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-accent text-white font-bold hover:-translate-y-0.5 transition-all cursor-pointer">
+                More offers in your city
+              </button>
+            ) : (
+              <p className="text-center text-white/50">You reached the end</p>
+            )}
+            <p className="text-center text-xs uppercase tracking-widest text-white/40">Deals in your selected city</p>
+          </div>
+        )}
       </div>
     </section>
   );
