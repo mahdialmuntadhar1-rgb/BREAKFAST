@@ -75,8 +75,8 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pageSize] = useState(20);
-  const [businessesData, setBusinessesData] = useState<Business[]>([]);
   const [page, setPage] = useState(0);
+  const [businessesData, setBusinessesData] = useState<Business[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,8 +109,9 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
             limit: pageSize
         });
 
+        const nextPage = isLoadMore ? page + 1 : 0;
+        setPage(nextPage);
         setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
-        setPage(result.page);
         setHasMore(result.hasMore);
     } catch (err) {
         console.error('Error fetching businesses:', err);

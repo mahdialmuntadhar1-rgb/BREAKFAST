@@ -1,222 +1,147 @@
-import { supabase, type SupabaseAuthUser } from './supabase';
+import { supabase } from './supabase';
 import type { Business, Post, User, BusinessPostcard, Deal, Event, Story } from '../types';
 
-const PAGE_SIZE = 20;
-
-type BusinessQueryParams = {
-  category?: string;
-  city?: string;
-  governorate?: string;
-  page?: number;
-  limit?: number;
-  featuredOnly?: boolean;
-};
-
-const normalizePost = (post: any): Post => ({
-  ...post,
-  id: String(post.id),
-  createdAt: post.createdAt ? new Date(post.createdAt) : new Date(),
-  isVerified: post.isVerified ?? post.verified ?? false
-});
+const toDate = (value: string | Date | null | undefined) => (value ? new Date(value) : new Date());
 
 export const api = {
-  async getBusinesses(params: BusinessQueryParams = {}) {
+  async getBusinesses(params: { category?: string; city?: string; governorate?: string; page?: number; limit?: number; featuredOnly?: boolean } = {}) {
     const page = params.page ?? 0;
-    const pageSize = params.limit ?? PAGE_SIZE;
+    const pageSize = params.limit ?? 20;
 
     let query = supabase.from('businesses').select('*').order('name', { ascending: true });
-
-    if (params.featuredOnly) query = query.eq('isFeatured', true);
     if (params.category && params.category !== 'all') query = query.eq('category', params.category);
     if (params.governorate && params.governorate !== 'all') query = query.eq('governorate', params.governorate);
     if (params.city?.trim()) query = query.ilike('city', `%${params.city.trim()}%`);
+    if (params.featuredOnly) query = query.eq('isFeatured', true);
 
-    const start = page * pageSize;
-    const end = start + pageSize - 1;
-    const { data, error } = await query.range(start, end).execute();
-
+    const { data, error } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
     if (error) throw error;
-
-    const businesses = (data ?? []).map((row: any) => ({
-      ...row,
-      id: String(row.id),
-      isVerified: row.isVerified ?? row.verified ?? false
-    } as Business));
 
     return {
-      data: businesses,
-      hasMore: businesses.length >= pageSize,
-      page
+      data: (data ?? []) as Business[],
+      hasMore: (data?.length ?? 0) === pageSize,
+      page,
     };
   },
 
-  async getPosts(params: { page?: number; limit?: number } = {}) {
-    const page = params.page ?? 0;
-    const limit = params.limit ?? 50;
-    const start = page * limit;
-    const end = start + limit - 1;
+  subscribeToPosts(callback: (posts: Post[]) => void, page = 0, limit = 50) {
+    const fetchPage = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('createdAt', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1);
 
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .order('createdAt', { ascending: false })
-      .range(start, end).execute();
-
-    if (error) throw error;
-
-    const posts = (data ?? []).map(normalizePost);
-    return { data: posts, hasMore: posts.length >= limit, page };
-  },
-
-  subscribeToPosts(callback: (posts: Post[]) => void) {
-    let channel: any = null;
-
-    const loadInitial = async () => {
-      const { data } = await this.getPosts({ page: 0, limit: 50 });
-      callback(data);
+      if (!error) {
+        callback((data ?? []).map((post: any) => ({ ...post, createdAt: toDate(post.createdAt) } as Post)));
+      }
     };
 
-    loadInitial().catch((error) => console.error('Failed to load posts:', error));
+    void fetchPage();
 
-    channel = supabase
-      .channel('posts-realtime')
+    const channel = supabase
+      .channel(`posts:${page}:${limit}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => {
-        loadInitial().catch((error) => console.error('Failed to refresh posts:', error));
+        void fetchPage();
       })
       .subscribe();
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
   },
 
-  async getDeals() {
+  async getDeals(params: { page?: number; limit?: number } = {}) {
+    const page = params.page ?? 0;
+    const limit = params.limit ?? 10;
     const { data, error } = await supabase
       .from('deals')
       .select('*')
       .order('createdAt', { ascending: false })
-      .limit(10).execute();
-
+      .range(page * limit, (page + 1) * limit - 1);
     if (error) throw error;
     return (data ?? []) as Deal[];
   },
 
-  async getStories() {
+  async getStories(params: { page?: number; limit?: number } = {}) {
+    const page = params.page ?? 0;
+    const limit = params.limit ?? 20;
     const { data, error } = await supabase
       .from('stories')
       .select('*')
       .order('createdAt', { ascending: false })
-      .limit(20).execute();
-
+      .range(page * limit, (page + 1) * limit - 1);
     if (error) throw error;
     return (data ?? []) as Story[];
   },
 
-  async getEvents(params: { category?: string; governorate?: string } = {}) {
+  async getEvents(params: { category?: string; governorate?: string; page?: number; limit?: number } = {}) {
+    const page = params.page ?? 0;
+    const limit = params.limit ?? 20;
     let query = supabase.from('events').select('*').order('date', { ascending: true });
-
     if (params.category && params.category !== 'all') query = query.eq('category', params.category);
     if (params.governorate && params.governorate !== 'all') query = query.eq('governorate', params.governorate);
 
-    const { data, error } = await query.execute();
+    const { data, error } = await query.range(page * limit, (page + 1) * limit - 1);
     if (error) throw error;
-
-    return (data ?? []).map((row: any) => ({ ...row, date: row.date ? new Date(row.date) : new Date() })) as Event[];
+    return (data ?? []).map((event: any) => ({ ...event, date: toDate(event.date) } as Event));
   },
 
   async createPost(postData: Partial<Post>) {
-    const { data, error } = await supabase
-      .from('posts')
-      .insert({ ...postData, createdAt: new Date().toISOString(), likes: 0 })
-      .select('id')
-      .single().execute();
-
-    if (error) return { success: false };
-    return { success: true, id: String(data.id) };
+    const { data, error } = await supabase.from('posts').insert({ ...postData, likes: postData.likes ?? 0 }).select('id').single();
+    if (error) throw error;
+    return { success: true, id: data.id };
   },
 
-  async getOrCreateProfile(authUser: SupabaseAuthUser, requestedRole: 'user' | 'owner' = 'user') {
+  async getOrCreateProfile(authUser: { id: string; email?: string; user_metadata?: { full_name?: string; avatar_url?: string } } | null, requestedRole: 'user' | 'owner' = 'user') {
+    if (!authUser) return null;
+
+    const { data: existing, error: fetchError } = await supabase.from('users').select('*').eq('id', authUser.id).maybeSingle();
+    if (fetchError) throw fetchError;
+
     const adminEmail = 'safaribosafar@gmail.com';
     const isAdminEmail = authUser.email === adminEmail;
 
-    const { data: existingUser, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .maybeSingle().execute();
-
-    if (fetchError) throw fetchError;
-
-    if (existingUser) {
-      if (isAdminEmail && existingUser.role !== 'admin') {
-        const { data: updated } = await supabase
-          .from('users')
-          .update({ role: 'admin' })
-          .eq('id', authUser.id)
-          .select('*')
-          .single().execute();
-
+    if (existing) {
+      if (isAdminEmail && existing.role !== 'admin') {
+        const { data: updated, error } = await supabase.from('users').update({ role: 'admin' }).eq('id', authUser.id).select('*').single();
+        if (error) throw error;
         return updated as User;
       }
-      return existingUser as User;
+      return existing as User;
     }
 
-    const newUser: User = {
+    const profile: User = {
       id: authUser.id,
       name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
       email: authUser.email || '',
       avatar: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.id}`,
       role: isAdminEmail ? 'admin' : requestedRole,
-      businessId: requestedRole === 'owner' ? `b_${authUser.id}` : undefined
+      businessId: requestedRole === 'owner' ? `b_${authUser.id}` : undefined,
     };
 
-    const { data: inserted, error: insertError } = await supabase.from('users').insert(newUser).select('*').single().execute();
+    const { data: inserted, error: insertError } = await supabase.from('users').insert(profile).select('*').single();
     if (insertError) throw insertError;
-
     return inserted as User;
   },
 
   async upsertPostcard(postcard: BusinessPostcard) {
-    const payload = {
-      ...postcard,
-      updatedAt: new Date().toISOString()
-    };
-
-    const { data, error } = await supabase
-      .from('business_postcards')
-      .upsert(payload, { onConflict: 'id' })
-      .select('id')
-      .single().execute();
-
-    if (error) return { success: false };
-    return { success: true, id: String(data.id) };
+    const { data, error } = await supabase.from('business_postcards').upsert(postcard).select('id').single();
+    if (error) throw error;
+    return { success: true, id: data.id };
   },
 
   async getPostcards(governorate?: string) {
     let query = supabase.from('business_postcards').select('*').order('updatedAt', { ascending: false });
-
-    if (governorate && governorate !== 'all') {
-      query = query.eq('governorate', governorate);
-    }
-
-    const { data, error } = await query.execute();
+    if (governorate && governorate !== 'all') query = query.eq('governorate', governorate);
+    const { data, error } = await query;
     if (error) throw error;
-
-    return (data ?? []).map((row: any) => ({
-      ...row,
-      id: String(row.id),
-      verified: row.verified ?? row.isVerified ?? false,
-      updatedAt: row.updatedAt ? new Date(row.updatedAt) : undefined
-    })) as BusinessPostcard[];
+    return (data ?? []) as BusinessPostcard[];
   },
 
   async updateProfile(userId: string, data: Partial<User>) {
-    const { error } = await supabase
-      .from('users')
-      .update({ ...data, updatedAt: new Date().toISOString() })
-      .eq('id', userId)
-      .execute();
-
-    return { success: !error };
-  }
+    const { error } = await supabase.from('users').update({ ...data, updatedAt: new Date().toISOString() }).eq('id', userId);
+    if (error) throw error;
+    return { success: true };
+  },
 };

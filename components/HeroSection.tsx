@@ -3,12 +3,7 @@ import { heroSlides } from '../constants';
 import { useTranslations } from '../hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
 
-interface HeroSectionProps {
-    onExplore?: () => void;
-    onLearnMore?: () => void;
-}
-
-export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onLearnMore }) => {
+export const HeroSection: React.FC<{ onExploreNow?: () => void; onLearnMore?: () => void; }> = ({ onExploreNow, onLearnMore }) => {
     const [activeSlide, setActiveSlide] = React.useState(0);
     const { t } = useTranslations();
 
@@ -58,7 +53,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onLearnMore
                             {t(heroSlides[activeSlide].subtitleKey)}
                         </p>
                         <div className="flex flex-wrap gap-4 justify-center">
-                            <button onClick={onExplore} className="px-8 py-4 rounded-full bg-primary text-white font-semibold hover:shadow-glow-primary transition-all duration-300 transform hover:scale-105">
+                            <button onClick={onExploreNow} className="px-8 py-4 rounded-full bg-primary text-white font-semibold hover:shadow-glow-primary transition-all duration-300 transform hover:scale-105">
                                 {t('actions.exploreNow') || 'Explore Now'}
                             </button>
                             <button onClick={onLearnMore} className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-300">

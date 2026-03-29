@@ -9,14 +9,17 @@ export const CommunityStories: React.FC = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const { t } = useTranslations();
 
   useEffect(() => {
     const fetchStories = async () => {
       setIsLoading(true);
       try {
-        const data = await api.getStories();
+        const data = await api.getStories({ page, limit: 12 });
         setStories(data);
+        setHasMore(data.length >= 12);
       } catch (error) {
         console.error('Error fetching stories:', error);
       } finally {
@@ -24,7 +27,7 @@ export const CommunityStories: React.FC = () => {
       }
     };
     fetchStories();
-  }, []);
+  }, [page]);
 
   if (isLoading) {
     return (
