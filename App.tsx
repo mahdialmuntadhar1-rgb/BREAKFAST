@@ -67,7 +67,6 @@ const MainContent: React.FC = () => {
             setCurrentUser(profile);
             setIsLoggedIn(Boolean(profile));
           }
-          sessionStorage.removeItem('pending_role');
         } else {
           setCurrentUser(null);
           setIsLoggedIn(false);

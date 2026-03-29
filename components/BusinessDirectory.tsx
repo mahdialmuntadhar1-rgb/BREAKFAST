@@ -123,6 +123,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   };
 
   useEffect(() => {
+    setPage(0);
     fetchBusinesses();
   }, [filters, pageSize]);
 
