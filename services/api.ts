@@ -111,7 +111,7 @@ function mapBusiness(row: any): Business {
         name: row.name || row.title || 'Unnamed Business',
         imageUrl: row.imageUrl || row.image_url || row.image,
         coverImage: row.coverImage || row.cover_image,
-        isFeatured: row.isFeatured ?? row.is_featured ?? false,
+        isFeatured: row.isFeatured ?? false,
         isPremium: row.isPremium ?? row.is_premium ?? false,
         rating: Number(row.rating ?? 0),
         reviewCount: Number(row.reviewCount ?? row.review_count ?? row.reviews ?? 0),
@@ -128,7 +128,7 @@ function mapPost(row: any): Post {
         businessAvatar: row.businessAvatar ?? row.business_avatar ?? row.avatar ?? 'https://picsum.photos/seed/post-avatar/120/120',
         caption: row.caption ?? '',
         imageUrl: row.imageUrl ?? row.image_url ?? '',
-        createdAt: parseDate(row.createdAt ?? row.created_at),
+        createdAt: parseDate(row.createdAt),
         likes: Number(row.likes ?? 0),
         isVerified: row.isVerified ?? row.verified ?? row.is_verified ?? false,
     };
@@ -147,7 +147,7 @@ function mapDeal(row: any): Deal {
         expiresInKey: row.expiresInKey ?? row.expires_in_key,
         claimed: Number(row.claimed ?? 0),
         total: Number(row.total ?? 0),
-        createdAt: row.createdAt ?? row.created_at,
+        createdAt: row.createdAt,
     };
 }
 
