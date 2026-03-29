@@ -134,6 +134,13 @@ export const CommunityStories: React.FC = () => {
             </div>
           </motion.div>
         </div>
+        {hasMore && (
+          <div className="mt-8 text-center">
+            <button onClick={() => setPage((p) => p + 1)} className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20">
+              {t('directory.loadMore')}
+            </button>
+          </div>
+        )}
       </div>
       {activeStory && <StoryViewer story={activeStory} onClose={() => setActiveStory(null)} />}
     </section>

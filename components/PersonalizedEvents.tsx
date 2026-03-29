@@ -13,6 +13,10 @@ export const PersonalizedEvents: React.FC = () => {
   const { t } = useTranslations();
 
   useEffect(() => {
+    setPage(0);
+  }, [activeTab]);
+
+  useEffect(() => {
     let isMounted = true;
     const timeoutId = setTimeout(() => {
       if (isMounted) setIsLoading(false);
@@ -21,12 +25,11 @@ export const PersonalizedEvents: React.FC = () => {
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        // Map tabs to categories if needed, or just fetch all for now
         const categoryMap: Record<string, string | undefined> = {
-          'forYou': undefined,
-          'trending': 'entertainment',
-          'nearYou': 'food',
-          'friendsGoing': 'business'
+          forYou: undefined,
+          trending: 'entertainment',
+          nearYou: 'food',
+          friendsGoing: 'business',
         };
         const data = await api.getEvents({ category: categoryMap[activeTab] });
         if (isMounted) setEvents(data);
@@ -39,7 +42,9 @@ export const PersonalizedEvents: React.FC = () => {
         }
       }
     };
-    fetchEvents();
+
+    void fetchEvents();
+
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
