@@ -61,9 +61,26 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
 
 interface BusinessDirectoryProps { initialFilter?: { categoryId?: string; city?: string; governorate?: string }; onBack?: () => void; }
 
+const DIRECTORY_STATE_KEY = 'iraq-compass-directory-state';
+
+const readSavedState = () => {
+  try {
+    const raw = sessionStorage.getItem(DIRECTORY_STATE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFilter, onBack }) => {
-  const [filters, setFilters] = useState({ category: initialFilter?.categoryId || 'all', rating: 0, city: initialFilter?.city || '', governorate: initialFilter?.governorate || 'all' });
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const savedState = readSavedState();
+  const [filters, setFilters] = useState({ 
+    category: initialFilter?.categoryId || savedState?.filters?.category || 'all', 
+    rating: savedState?.filters?.rating || 0,
+    city: initialFilter?.city || savedState?.filters?.city || '',
+    governorate: initialFilter?.governorate || savedState?.filters?.governorate || 'all'
+  });
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(savedState?.viewMode || 'grid');
   const [pageSize] = useState(20);
   const [businessesData, setBusinessesData] = useState<Business[]>([]);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(undefined);
@@ -72,7 +89,19 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslations();
 
-  useEffect(() => { setFilters({ category: initialFilter?.categoryId || 'all', rating: 0, city: initialFilter?.city || '', governorate: initialFilter?.governorate || 'all' }); }, [initialFilter]);
+  useEffect(() => {
+    if (!initialFilter) return;
+    setFilters((prev) => ({
+      ...prev,
+      category: initialFilter?.categoryId || prev.category,
+      city: initialFilter?.city || prev.city,
+      governorate: initialFilter?.governorate || prev.governorate,
+    }));
+  }, [initialFilter]);
+
+  useEffect(() => {
+    sessionStorage.setItem(DIRECTORY_STATE_KEY, JSON.stringify({ filters, page, viewMode }));
+  }, [filters, page, viewMode]);
 
   const fetchBusinesses = async (isLoadMore = false) => {
     setIsLoading(true); setError(null);
@@ -87,9 +116,13 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
     } finally { setIsLoading(false); clearTimeout(timeoutId); }
   };
 
-  useEffect(() => { fetchBusinesses(); }, [filters, pageSize]);
+  useEffect(() => {
+    fetchBusinesses();
+  }, [filters.category, filters.city, filters.governorate, pageSize]);
 
-  const contextTitle = `${filters.category !== 'all' ? t(categories.find((c) => c.id === filters.category)?.nameKey || filters.category) : 'Businesses'} in ${filters.governorate !== 'all' ? filters.governorate : 'Iraq'}`;
+  const filteredBusinesses = filters.rating > 0
+    ? businessesData.filter((business) => (business.rating || 0) >= filters.rating)
+    : businessesData;
 
   return (
     <section className="py-16">
@@ -113,9 +146,47 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
 
           <div className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
-              <p className="text-white/80">{t('directory.showing')} {businessesData.length} {t('directory.businesses')}</p>
-              <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl p-1"><button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-primary' : 'hover:bg-white/10'}`}><Grid3x3 className="w-5 h-5 text-white" /></button><button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'list' ? 'bg-primary' : 'hover:bg-white/10'}`}><List className="w-5 h-5 text-white" /></button></div>
+              <p className="text-white/80">{t('directory.showing')} {filteredBusinesses.length} {t('directory.businesses')}</p>
+              <div className="flex items-center gap-2 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-1">
+                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary' : 'hover:bg-white/10'}`}><Grid3x3 className="w-5 h-5 text-white" /></button>
+                <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary' : 'hover:bg-white/10'}`}><List className="w-5 h-5 text-white" /></button>
+              </div>
             </div>
+            
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                    <p className="text-white/40 text-sm animate-pulse">{t('directory.loading')}</p>
+                </div>
+            ) : error ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                        <ArrowLeft className="w-8 h-8 text-red-400 rotate-180" />
+                    </div>
+                    <h3 className="text-white font-semibold text-lg mb-2">{t('directory.errorTitle')}</h3>
+                    <p className="text-white/60 text-sm mb-6 max-w-xs mx-auto">{error}</p>
+                    <button 
+                        onClick={() => fetchBusinesses()} 
+                        className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                    >
+                        {t('directory.retry')}
+                    </button>
+                </div>
+            ) : filteredBusinesses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                        <MapPin className="w-8 h-8 text-white/20" />
+                    </div>
+                    <h3 className="text-white font-semibold text-lg mb-2">{t('directory.noResultsTitle')}</h3>
+                    <p className="text-white/60 text-sm max-w-xs mx-auto">
+                        {t('directory.noResultsDesc')}
+                    </p>
+                </div>
+            ) : (
+                <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-6' : 'space-y-4'}>
+                    {filteredBusinesses.map((business) => (<BusinessCard key={business.id} business={business} viewMode={viewMode} />))}
+                </div>
+            )}
 
             {isLoading ? <div className="flex flex-col items-center justify-center py-20 gap-4"><div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div><p className="text-white/40 text-sm animate-pulse">{t('directory.loading')}</p></div> : error ? <div className="flex flex-col items-center justify-center py-20 text-center"><h3 className="text-white font-semibold text-lg mb-2">{t('directory.errorTitle')}</h3><p className="text-white/60 text-sm mb-6 max-w-xs mx-auto">{error}</p><button onClick={() => fetchBusinesses()} className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all cursor-pointer">{t('directory.retry')}</button></div> : businessesData.length === 0 ? <div className="flex flex-col items-center justify-center py-20 text-center"><div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4"><MapPin className="w-8 h-8 text-white/20" /></div><h3 className="text-white font-semibold text-lg mb-2">Be the first to add a business</h3><p className="text-white/60 text-sm max-w-xs mx-auto">No results for current filters. Try another city or category.</p></div> : <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-6' : 'space-y-4'}>{businessesData.map((business) => <BusinessCard key={business.id} business={business} viewMode={viewMode} />)}</div>}
 

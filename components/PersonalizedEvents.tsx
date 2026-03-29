@@ -16,10 +16,24 @@ export const PersonalizedEvents: React.FC<PersonalizedEventsProps> = ({ selected
   const { t } = useTranslations();
 
   useEffect(() => {
+    setPage(0);
+  }, [activeTab]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const timeoutId = setTimeout(() => {
+      if (isMounted) setIsLoading(false);
+    }, 5000);
+
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const categoryMap: Record<string, string | undefined> = { forYou: undefined, trending: 'entertainment', nearYou: 'food', friendsGoing: 'business' };
+        const categoryMap: Record<string, string | undefined> = {
+          forYou: undefined,
+          trending: 'entertainment',
+          nearYou: 'food',
+          friendsGoing: 'business',
+        };
         const data = await api.getEvents({ category: categoryMap[activeTab] });
         setEvents(data);
       } catch (error) {
@@ -28,7 +42,13 @@ export const PersonalizedEvents: React.FC<PersonalizedEventsProps> = ({ selected
         setIsLoading(false);
       }
     };
-    fetchEvents();
+
+    void fetchEvents();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [activeTab]);
 
   const visibleEvents = useMemo(() => events.slice(0, visibleCount), [events, visibleCount]);

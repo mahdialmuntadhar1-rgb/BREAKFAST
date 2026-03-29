@@ -74,8 +74,13 @@ export const CommunityStories: React.FC<CommunityStoriesProps> = ({ selectedGove
             <span className="text-white text-xs font-black uppercase tracking-widest block">Post Story</span>
           </motion.div>
         </div>
-
-        {stories.length > 0 && <div className="mt-10">{hasMore ? <button onClick={() => setVisibleCount((v) => v + 12)} className="w-full h-12 rounded-xl bg-gradient-to-r from-secondary to-primary text-white font-semibold hover:-translate-y-0.5 transition-all cursor-pointer">Load more stories</button> : <p className="text-center text-white/60">You reached the end</p>}</div>}
+        {hasMore && (
+          <div className="mt-8 text-center">
+            <button onClick={() => setPage((p) => p + 1)} className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20">
+              {t('directory.loadMore')}
+            </button>
+          </div>
+        )}
       </div>
       {activeStory && <StoryViewer story={activeStory} onClose={() => setActiveStory(null)} />}
     </section>
