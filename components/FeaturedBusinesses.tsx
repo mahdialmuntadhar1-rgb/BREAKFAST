@@ -4,13 +4,15 @@ import type { Business } from '../types';
 import { Crown, Star, MapPin, Clock, ChevronRight, ChevronLeft } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { GlassCard } from './GlassCard';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import { useAppSettings } from '../hooks/useAppSettings';
 
 export const FeaturedBusinesses: React.FC = () => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { t, lang } = useTranslations();
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const { governorate } = useAppSettings();
 
   useEffect(() => {
     let isMounted = true;
@@ -21,7 +23,7 @@ export const FeaturedBusinesses: React.FC = () => {
     const fetchFeatured = async () => {
       setIsLoading(true);
       try {
-        const result = await api.getBusinesses({ featuredOnly: true, limit: 10 });
+        const result = await api.getBusinesses({ featuredOnly: true, limit: 10, governorate });
         if (isMounted) setBusinesses(result.data);
       } catch (error) {
         console.error('Error fetching featured businesses:', error);
@@ -37,7 +39,7 @@ export const FeaturedBusinesses: React.FC = () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, []);
+  }, [governorate]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -105,7 +107,7 @@ export const FeaturedBusinesses: React.FC = () => {
               const displayName = lang === 'ar' && business.nameAr ? business.nameAr : 
                                    lang === 'ku' && business.nameKu ? business.nameKu : 
                                    business.name;
-              const displayImage = business.coverImage || business.imageUrl || business.image || 'https://picsum.photos/seed/placeholder/600/400';
+              const displayImage = business.coverImage || business.imageUrl || 'https://picsum.photos/seed/placeholder/600/400';
               const isPremium = business.isPremium || business.isFeatured;
               
               return (

@@ -130,18 +130,16 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                                 <div className="p-4 flex items-center justify-between bg-white/[0.02]">
                                     <div className="flex items-center gap-8">
                                         <button 
-                                            onClick={() => isLoggedIn && handleLike(post.id)}
-                                            disabled={!isLoggedIn}
-                                            className={`flex items-center gap-2.5 transition-all transform active:scale-90 ${!isLoggedIn ? 'opacity-30 cursor-not-allowed' : likedPosts.has(post.id) ? 'text-accent' : 'text-white/50 hover:text-accent'}`}
+                                            onClick={() => (isLoggedIn ? handleLike(post.id) : onLike?.(post.id))}
+                                            className={`flex items-center gap-2.5 transition-all transform active:scale-90 ${!isLoggedIn ? 'opacity-70' : likedPosts.has(post.id) ? 'text-accent' : 'text-white/50 hover:text-accent'}`}
                                             title={!isLoggedIn ? t('social.loginToLike') : ""}
                                         >
                                             <Heart className={`w-6 h-6 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
                                             <span className="text-base font-bold">{post.likes + (likedPosts.has(post.id) ? 1 : 0)}</span>
                                         </button>
                                         <button 
-                                            onClick={() => isLoggedIn && onComment?.(post.id)}
-                                            disabled={!isLoggedIn}
-                                            className={`flex items-center gap-2.5 transition-all transform active:scale-90 ${!isLoggedIn ? 'opacity-30 cursor-not-allowed' : 'text-white/50 hover:text-primary'}`}
+                                            onClick={() => (isLoggedIn ? onComment?.(post.id) : onComment?.(post.id))}
+                                            className={`flex items-center gap-2.5 transition-all transform active:scale-90 ${!isLoggedIn ? 'opacity-70' : 'text-white/50 hover:text-primary'}`}
                                             title={!isLoggedIn ? t('social.loginToComment') : ""}
                                         >
                                             <MessageCircle className="w-6 h-6" />
