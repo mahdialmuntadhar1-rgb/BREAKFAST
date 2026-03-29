@@ -8,12 +8,18 @@ interface BusinessGridSectionProps {
     posts: Post[];
     isLoading: boolean;
     isLoggedIn: boolean;
+    hasMore: boolean;
+    onLoadMore: () => void;
+    onRequireAuth: () => void;
 }
 
 export const BusinessGridSection: React.FC<BusinessGridSectionProps> = ({ 
     posts, 
     isLoading, 
-    isLoggedIn 
+    isLoggedIn,
+    hasMore,
+    onLoadMore,
+    onRequireAuth
 }) => {
     const { t } = useTranslations();
 
@@ -39,8 +45,17 @@ export const BusinessGridSection: React.FC<BusinessGridSectionProps> = ({
                 <SocialFeed 
                     posts={posts} 
                     isLoading={isLoading} 
-                    isLoggedIn={isLoggedIn} 
+                    isLoggedIn={isLoggedIn}
+                    onRequireAuth={onRequireAuth}
                 />
+
+                {hasMore && (
+                    <div className="mt-6 text-center">
+                        <button onClick={onLoadMore} className="px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all">
+                            {t('directory.loadMore')}
+                        </button>
+                    </div>
+                )}
             </motion.div>
         </section>
     );
