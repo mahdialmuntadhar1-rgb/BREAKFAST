@@ -219,8 +219,8 @@ export const api = {
                 offset,
                 filters
             });
-            console.log('getBusinesses rows returned:', rows.length);
-            console.log('getBusinesses first row:', rows[0] ?? null);
+            console.log('[getBusinesses] rows returned:', rows.length);
+            console.log('[getBusinesses] first row:', rows[0] ?? null);
 
             if (!rows.length) return fallback();
             const data = rows.map(mapBusiness);
