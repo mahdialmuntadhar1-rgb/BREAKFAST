@@ -75,6 +75,22 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
+/**
+ * Removes undefined properties from an object recursively to prevent Firestore errors.
+ */
+function cleanData(data: any): any {
+    if (data === null || typeof data !== 'object') return data;
+    if (Array.isArray(data)) return data.map(cleanData);
+    
+    const cleaned: any = {};
+    Object.keys(data).forEach(key => {
+        if (data[key] !== undefined) {
+            cleaned[key] = cleanData(data[key]);
+        }
+    });
+    return cleaned;
+}
+
 // Test connection
 async function testConnection() {
   if (!isConfigValid) return;
@@ -243,11 +259,11 @@ export const api = {
         if (!isConfigValid) return { success: true, id: 'mock_post_id' };
         const path = 'posts';
         try {
-            const docRef = await addDoc(collection(db, path), {
+            const docRef = await addDoc(collection(db, path), cleanData({
                 ...postData,
                 createdAt: serverTimestamp(),
                 likes: 0
-            });
+            }));
             return { success: true, id: docRef.id };
         } catch (error) {
             handleFirestoreError(error, OperationType.WRITE, path);
@@ -281,9 +297,9 @@ export const api = {
                     email: firebaseUser.email || '',
                     avatar: firebaseUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firebaseUser.uid}`,
                     role: isAdminEmail ? 'admin' as any : requestedRole,
-                    businessId: requestedRole === 'owner' ? `b_${firebaseUser.uid}` : undefined
+                    businessId: requestedRole === 'owner' ? `b_${firebaseUser.uid}` : null
                 };
-                await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+                await setDoc(doc(db, 'users', firebaseUser.uid), cleanData(newUser));
                 return newUser;
             }
         } catch (error) {
@@ -299,10 +315,10 @@ export const api = {
             const docId = `${postcard.title}_${postcard.city}`.replace(/\s+/g, '_').toLowerCase();
             const docRef = doc(db, path, docId);
             
-            await setDoc(docRef, {
+            await setDoc(docRef, cleanData({
                 ...postcard,
                 updatedAt: serverTimestamp()
-            }, { merge: true });
+            }), { merge: true });
             
             return { success: true, id: docId };
         } catch (error) {
@@ -339,10 +355,10 @@ export const api = {
         if (!isConfigValid) return { success: true };
         const path = `users/${userId}`;
         try {
-            await setDoc(doc(db, 'users', userId), {
+            await setDoc(doc(db, 'users', userId), cleanData({
                 ...data,
                 updatedAt: serverTimestamp()
-            }, { merge: true });
+            }), { merge: true });
             return { success: true };
         } catch (error) {
             handleFirestoreError(error, OperationType.WRITE, path);

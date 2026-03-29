@@ -29,7 +29,11 @@ const WaypointSkeleton: React.FC = () => (
     </div>
 );
 
-export const CityGuide: React.FC = () => {
+interface CityGuideProps {
+    onGovernorateSelect?: (gov: string) => void;
+}
+
+export const CityGuide: React.FC<CityGuideProps> = ({ onGovernorateSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +95,12 @@ export const CityGuide: React.FC = () => {
           setIsLoading(false);
       }
   }
+
+  const handleSuggestionClick = (command: string) => {
+      setSearchQuery(command);
+      // If the suggestion matches a governorate name, we could trigger onGovernorateSelect
+      // For now, let's just update the search query
+  };
 
   return (
     <section className="py-32 bg-black relative overflow-hidden">
@@ -180,7 +190,7 @@ export const CityGuide: React.FC = () => {
                     {(t('cityGuide.suggestions') as unknown as string[] || ['Ancient Babylon', 'Erbil Citadel', 'Marshes of Basra']).map((command, i) => (
                       <button 
                         key={i} 
-                        onClick={() => setSearchQuery(command)} 
+                        onClick={() => handleSuggestionClick(command)} 
                         className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 hover:bg-primary/10 text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all duration-500"
                       >
                         {command}

@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import type { Business } from '../types';
-import { Crown, Star, MapPin, Clock, ChevronRight, ChevronLeft } from './icons';
+import { Crown, Star, MapPin, Clock, ChevronRight, ChevronLeft, Loader2 } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { GlassCard } from './GlassCard';
 import { motion, AnimatePresence } from 'motion/react';
 
-export const FeaturedBusinesses: React.FC = () => {
+interface FeaturedBusinessesProps {
+  onSeeAll?: () => void;
+}
+
+export const FeaturedBusinesses: React.FC<FeaturedBusinessesProps> = ({ onSeeAll }) => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { t, lang } = useTranslations();
@@ -51,41 +55,54 @@ export const FeaturedBusinesses: React.FC = () => {
     return (
       <div className="py-24 flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-        <p className="text-white/40 font-medium animate-pulse">{t('featured.loading') || 'Finding premium spots...'}</p>
+        <p className="text-white/40 font-black uppercase tracking-widest animate-pulse">{t('featured.loading') || 'Finding premium spots...'}</p>
       </div>
     );
   }
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-32 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none" />
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex items-end justify-between mb-12">
-          <div className="text-start">
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
-              {t('featured.title')}
-            </h2>
-            <p className="text-white/50 text-lg max-w-xl">
-              {t('featured.subtitle') || 'Discover hand-picked premium experiences across Iraq.'}
-            </p>
-          </div>
-          <div className="hidden md:flex gap-3">
-            <button 
-              onClick={() => scroll('left')}
-              className="p-3 rounded-full bg-white/5 border border-white/10 text-white hover:bg-primary hover:border-primary transition-all duration-300"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={() => scroll('right')}
-              className="p-3 rounded-full bg-white/5 border border-white/10 text-white hover:bg-primary hover:border-primary transition-all duration-300"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </div>
+        <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-8">
+            <div className="space-y-4 max-w-2xl text-start">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent text-[10px] font-black uppercase tracking-[0.2em]">
+                    <Crown className="w-3 h-3" />
+                    {t('featured.badge') || 'Premium Selection'}
+                </div>
+                <h2 className="text-5xl font-black text-white tracking-tighter">
+                    {t('featured.title') || 'Featured Businesses'}
+                </h2>
+                <p className="text-white/40 font-medium">
+                    {t('featured.subtitle') || 'Discover hand-picked premium experiences across Iraq.'}
+                </p>
+            </div>
+            <div className="flex items-center gap-4">
+                <button 
+                  onClick={onSeeAll}
+                  className="group flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:border-primary/50 transition-all duration-500"
+                >
+                    {t('featured.viewAll') || 'Explore all'}
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <div className="hidden md:flex gap-2">
+                    <button 
+                        onClick={() => scroll('left')}
+                        className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:bg-primary hover:border-primary transition-all duration-300"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button 
+                        onClick={() => scroll('right')}
+                        className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:bg-primary hover:border-primary transition-all duration-300"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div 

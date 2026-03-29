@@ -3,84 +3,79 @@ import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { categories, governorates } from '../constants';
 import { api } from '../services/api';
 import type { Business } from '../types';
-import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft, Phone } from './icons';
+import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft, Loader2 } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { GlassCard } from './GlassCard';
+import { motion, AnimatePresence } from 'motion/react';
 
-interface BusinessCardProps { business: Business; viewMode: 'grid' | 'list'; }
+interface BusinessCardProps {
+  business: Business;
+  viewMode: 'grid' | 'list';
+}
 
 const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
   const { t, lang } = useTranslations();
-  const displayName = lang === 'ar' && business.nameAr ? business.nameAr : lang === 'ku' && business.nameKu ? business.nameKu : business.name;
-  const displayImage = business.imageUrl || (business as any).image || business.coverImage || 'https://picsum.photos/seed/placeholder/400/300';
-  const displayReviews = business.reviewCount ?? (business as any).reviews ?? 0;
-  const badge = business.isFeatured ? 'Featured' : 'New';
+  
+  const displayName = lang === 'ar' && business.nameAr ? business.nameAr : 
+                      lang === 'ku' && business.nameKu ? business.nameKu : 
+                      business.name;
+                      
+  const displayImage = business.imageUrl || business.image || business.coverImage || 'https://picsum.photos/seed/placeholder/400/300';
+  const displayReviews = business.reviewCount ?? business.reviews ?? 0;
+  const isVerified = business.isVerified ?? false;
 
   if (viewMode === 'list') {
     return (
-      <GlassCard className="p-4 flex gap-4 text-start rtl:text-right hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+      <GlassCard className="p-4 flex gap-4 text-start rtl:text-right">
         <img src={displayImage} alt={displayName} className="w-24 h-24 rounded-xl object-cover flex-shrink-0" />
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1"><h3 className="text-white font-semibold text-lg">{displayName}</h3><span className="px-2 py-0.5 rounded-full text-[10px] bg-primary/20 border border-primary/30 text-primary">{badge}</span></div>
+          <h3 className="text-white font-semibold text-lg mb-1">{displayName}</h3>
           <p className="text-white/60 text-sm mb-2">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
-          <div className="flex items-center gap-4 text-sm text-white/70">
-            <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span>{business.rating}</span></div>
-            <div className="flex items-center gap-1"><MapPin className="w-4 h-4" />{business.city || business.governorate || 'Baghdad'}</div>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white">{business.rating}</span></div>
+            <div className="flex items-center gap-1 text-white/60"><MapPin className="w-4 h-4" />{business.distance || '1.2'} km</div>
           </div>
         </div>
         <div className="flex flex-col justify-center gap-2">
-          <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-medium text-sm hover:-translate-y-0.5 transition-all cursor-pointer">View</button>
-          <button className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-medium text-sm hover:bg-white/20 transition-all cursor-pointer inline-flex items-center gap-2"><Phone className="w-4 h-4" />Call</button>
+          <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-medium text-sm">{t('directory.view')}</button>
+          <button className="px-4 py-2 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white font-medium text-sm">{t('directory.contact')}</button>
         </div>
       </GlassCard>
     );
   }
 
   return (
-    <GlassCard className="overflow-hidden group text-start p-0 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+    <GlassCard className="overflow-hidden group text-start p-0">
       <div className="relative h-48 overflow-hidden">
-        <img src={displayImage} alt={displayName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        {business.isVerified && <div className="absolute top-3 end-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center"><CheckCircle className="w-5 h-5 text-dark-bg" /></div>}
-        <span className="absolute top-3 start-3 px-2 py-1 text-[10px] rounded-full bg-primary/85 text-white font-bold uppercase tracking-wider">{badge}</span>
+        <img src={displayImage} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+        {isVerified && <div className="absolute top-3 end-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center"><CheckCircle className="w-5 h-5 text-dark-bg" /></div>}
       </div>
       <div className="p-5">
         <h3 className="text-white font-semibold text-lg mb-2">{displayName}</h3>
-        <p className="text-white/60 text-sm">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
-        <div className="mt-3 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white font-medium">{business.rating}</span><span className="text-white/60">({displayReviews})</span></div>
-          <div className="flex items-center gap-1 text-white/60"><MapPin className="w-4 h-4" />{business.city || business.governorate || 'Baghdad'}</div>
+        <p className="text-white/60 text-sm mb-3">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white font-medium">{business.rating}</span><span className="text-white/60 text-sm">({displayReviews})</span></div>
+          <div className="flex items-center gap-1 text-white/60 text-sm"><MapPin className="w-4 h-4" />{business.distance || '1.2'} km</div>
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <button className="py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary transition-all cursor-pointer">View</button>
-          <button className="py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/20 transition-all cursor-pointer inline-flex items-center justify-center gap-2"><Phone className="w-4 h-4" />Call</button>
-        </div>
+        <button className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary transition-all">{t('directory.viewProfile')}</button>
       </div>
     </GlassCard>
   );
 };
 
-interface BusinessDirectoryProps { initialFilter?: { categoryId?: string; city?: string; governorate?: string }; onBack?: () => void; }
-
-const DIRECTORY_STATE_KEY = 'iraq-compass-directory-state';
-
-const readSavedState = () => {
-  try {
-    const raw = sessionStorage.getItem(DIRECTORY_STATE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-};
+interface BusinessDirectoryProps {
+    initialFilter?: { categoryId?: string; city?: string; governorate?: string };
+    onBack?: () => void;
+}
 
 export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFilter, onBack }) => {
-  const savedState = readSavedState();
   const [filters, setFilters] = useState({ 
-    category: initialFilter?.categoryId || savedState?.filters?.category || 'all', 
-    rating: savedState?.filters?.rating || 0,
-    city: initialFilter?.city || savedState?.filters?.city || '',
-    governorate: initialFilter?.governorate || savedState?.filters?.governorate || 'all'
+    category: initialFilter?.categoryId || 'all', 
+    rating: 0,
+    city: initialFilter?.city || '',
+    governorate: initialFilter?.governorate || 'all'
   });
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(savedState?.viewMode || 'grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pageSize] = useState(20);
   const [businessesData, setBusinessesData] = useState<Business[]>([]);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(undefined);
@@ -90,109 +85,305 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   const { t } = useTranslations();
 
   useEffect(() => {
-    if (!initialFilter) return;
-    setFilters((prev) => ({
-      ...prev,
-      category: initialFilter?.categoryId || prev.category,
-      city: initialFilter?.city || prev.city,
-      governorate: initialFilter?.governorate || prev.governorate,
-    }));
+    setFilters({
+        category: initialFilter?.categoryId || 'all',
+        rating: 0,
+        city: initialFilter?.city || '',
+        governorate: initialFilter?.governorate || 'all'
+    });
   }, [initialFilter]);
 
-  useEffect(() => {
-    sessionStorage.setItem(DIRECTORY_STATE_KEY, JSON.stringify({ filters, page, viewMode }));
-  }, [filters, page, viewMode]);
-
   const fetchBusinesses = async (isLoadMore = false) => {
-    setIsLoading(true); setError(null);
-    const timeoutId = setTimeout(() => setIsLoading(false), 8000);
+    setIsLoading(true);
+    setError(null);
+    
+    // Safety timeout
+    const timeoutId = setTimeout(() => {
+        setIsLoading(false);
+    }, 8000);
+
     try {
-      const result = await api.getBusinesses({ category: filters.category, city: filters.city, governorate: filters.governorate, lastDoc: isLoadMore ? lastDoc : undefined, limit: pageSize });
-      setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
-      setLastDoc(result.lastDoc); setHasMore(result.hasMore);
+        const result = await api.getBusinesses({
+            category: filters.category,
+            city: filters.city,
+            governorate: filters.governorate,
+            lastDoc: isLoadMore ? lastDoc : undefined,
+            limit: pageSize
+        });
+        
+        setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
+        setLastDoc(result.lastDoc);
+        setHasMore(result.hasMore);
     } catch (err) {
-      console.error('Error fetching businesses:', err);
-      setError(t('directory.errorLoading'));
-    } finally { setIsLoading(false); clearTimeout(timeoutId); }
+        console.error('Error fetching businesses:', err);
+        setError(t('directory.errorLoading'));
+    } finally {
+        setIsLoading(false);
+        clearTimeout(timeoutId);
+    }
   };
 
   useEffect(() => {
     fetchBusinesses();
-  }, [filters.category, filters.city, filters.governorate, pageSize]);
+  }, [filters, pageSize]);
 
-  const filteredBusinesses = filters.rating > 0
-    ? businessesData.filter((business) => (business.rating || 0) >= filters.rating)
-    : businessesData;
+  const getContextualTitle = () => {
+    const categoryName = filters.category === 'all' 
+        ? (t('directory.allBusinesses') || 'Businesses')
+        : t(categories.find(c => c.id === filters.category)?.nameKey || filters.category);
+    
+    const governorateName = filters.governorate === 'all'
+        ? ''
+        : ` ${t('common.in') || 'in'} ${t(governorates.find(g => g.id === filters.governorate)?.nameKey || filters.governorate)}`;
+    
+    const cityName = filters.city ? ` - ${filters.city}` : '';
+
+    return `${categoryName}${governorateName}${cityName}`;
+  };
 
   return (
-    <section className="py-16">
+    <section className="py-24 min-h-screen bg-[#0A0A0B]">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-center relative mb-4">
-          {onBack && <button onClick={onBack} className="absolute start-0 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors cursor-pointer"><ArrowLeft className="w-4 h-4"/><span className="hidden md:inline">{t('header.backToHome')}</span></button>}
-          <h2 className="text-3xl font-bold text-white text-center">{t('directory.title')}</h2>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-16">
+            <div className="flex items-center gap-6">
+                {onBack && (
+                    <button 
+                        onClick={onBack} 
+                        className="group p-4 rounded-2xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-primary/50 transition-all duration-500"
+                    >
+                        <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform"/>
+                    </button>
+                )}
+                <div className="space-y-2">
+                    <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
+                        {getContextualTitle()}
+                    </h2>
+                    <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
+                            {businessesData.length} {t('directory.resultsFound') || 'Results Found'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl">
+                <button 
+                    onClick={() => setViewMode('grid')} 
+                    className={`p-3 rounded-xl transition-all duration-500 ${viewMode === 'grid' ? 'bg-white text-black shadow-xl scale-105' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                >
+                    <Grid3x3 className="w-5 h-5" />
+                </button>
+                <button 
+                    onClick={() => setViewMode('list')} 
+                    className={`p-3 rounded-xl transition-all duration-500 ${viewMode === 'list' ? 'bg-white text-black shadow-xl scale-105' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                >
+                    <List className="w-5 h-5" />
+                </button>
+            </div>
         </div>
-        <div className="mb-8 text-center"><span className="inline-flex px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-semibold uppercase tracking-widest">{contextTitle}</span></div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1 space-y-4 text-start rtl:text-right">
-            <GlassCard className="p-6">
-              <h3 className="text-white font-semibold mb-4 flex items-center justify-between">{t('directory.filters')}<button onClick={() => setFilters({ category: 'all', rating: 0, city: '', governorate: 'all' })} className="text-xs text-secondary hover:text-secondary/80 cursor-pointer">{t('directory.reset')}</button></h3>
-              <div className="mb-6"><label className="block text-white/80 text-sm mb-2">{t('directory.city')}</label><input type="text" value={filters.city} onChange={(e) => setFilters({ ...filters, city: e.target.value })} placeholder={t('directory.cityPlaceholder')} className="w-full h-12 px-4 rounded-xl bg-white/10 border border-white/20 text-white outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(109,91,255,0.2)] transition-colors" /></div>
-              <div className="mb-6"><label className="block text-white/80 text-sm mb-2">{t('directory.category')}</label><select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="w-full h-12 px-4 rounded-xl bg-white/10 border border-white/20 text-white outline-none"> <option value="all" className="bg-dark-bg">{t('directory.allCategories')}</option>{categories.map(category => <option key={category.id} value={category.id} className="bg-dark-bg">{t(category.nameKey)}</option>)} </select></div>
-              <div className="mb-6"><label className="block text-white/80 text-sm mb-2">{t('directory.governorate')}</label><select value={filters.governorate} onChange={(e) => setFilters({ ...filters, governorate: e.target.value })} className="w-full h-12 px-4 rounded-xl bg-white/10 border border-white/20 text-white outline-none">{governorates.map(gov => <option key={gov.id} value={gov.id} className="bg-dark-bg">{t(gov.nameKey)}</option>)}</select></div>
-              <div><label className="text-white/80 text-sm mb-2 block">{t('directory.minimumRating')}</label><div className="flex gap-2">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} onClick={() => setFilters({ ...filters, rating })} className={`flex-1 aspect-square rounded-xl flex items-center justify-center transition-all cursor-pointer ${filters.rating >= rating ? 'bg-gradient-to-br from-accent to-primary' : 'bg-white/10 hover:bg-white/20'}`}><Star className={`w-5 h-5 ${filters.rating >= rating ? 'text-white fill-white' : 'text-white/50'}`} /></button>)}</div></div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+          <div className="lg:col-span-1 space-y-8">
+            <GlassCard className="p-8 sticky top-32 border-white/10">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xl font-black text-white uppercase tracking-tighter">
+                    {t('directory.filters') || 'Filters'}
+                </h3>
+                <button 
+                    onClick={() => setFilters({ category: 'all', rating: 0, city: '', governorate: 'all' })} 
+                    className="text-[10px] font-black text-primary uppercase tracking-widest hover:text-primary/80 transition-colors"
+                >
+                    {t('directory.reset') || 'Clear All'}
+                </button>
+              </div>
+              
+              <div className="space-y-8">
+                <div className="space-y-3">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
+                        {t('directory.governorate') || 'Governorate'}
+                    </label>
+                    <div className="relative group">
+                        <select 
+                            value={filters.governorate} 
+                            onChange={(e) => setFilters({ ...filters, governorate: e.target.value })} 
+                            className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-sm outline-none appearance-none focus:border-primary/50 focus:bg-white/[0.08] transition-all duration-500 cursor-pointer"
+                        >
+                            {governorates.map(gov => (
+                                <option key={gov.id} value={gov.id} className="bg-[#0A0A0B] text-white py-4">
+                                    {t(gov.nameKey)}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none">
+                            <div className="w-1.5 h-1.5 border-r-2 border-b-2 border-white/20 rotate-45 group-focus-within:border-primary transition-colors" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
+                        {t('directory.city') || 'City / District'}
+                    </label>
+                    <input 
+                        type="text"
+                        value={filters.city}
+                        onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                        placeholder={t('directory.cityPlaceholder') || 'Search city...'}
+                        className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-sm outline-none focus:border-primary/50 focus:bg-white/[0.08] transition-all duration-500"
+                    />
+                </div>
+
+                <div className="space-y-3">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
+                        {t('directory.category') || 'Category'}
+                    </label>
+                    <div className="relative group">
+                        <select 
+                            value={filters.category} 
+                            onChange={(e) => setFilters({ ...filters, category: e.target.value })} 
+                            className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-sm outline-none appearance-none focus:border-primary/50 focus:bg-white/[0.08] transition-all duration-500 cursor-pointer"
+                        >
+                            <option value="all" className="bg-[#0A0A0B]">{t('directory.allCategories') || 'All Categories'}</option>
+                            {categories.map(category => (
+                                <option key={category.id} value={category.id} className="bg-[#0A0A0B]">
+                                    {t(category.nameKey)}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none">
+                            <div className="w-1.5 h-1.5 border-r-2 border-b-2 border-white/20 rotate-45 group-focus-within:border-primary transition-colors" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">
+                        {t('directory.minimumRating') || 'Minimum Rating'}
+                    </label>
+                    <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                            <button 
+                                key={rating} 
+                                onClick={() => setFilters({ ...filters, rating })} 
+                                className={`flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-500 border ${
+                                    filters.rating >= rating 
+                                    ? 'bg-white border-white text-black scale-105 shadow-xl' 
+                                    : 'bg-white/5 border-white/10 text-white/20 hover:border-white/30 hover:text-white/40'
+                                }`}
+                            >
+                                <Star className={`w-4 h-4 ${filters.rating >= rating ? 'fill-current' : ''}`} />
+                            </button>
+                        ))}
+                    </div>
+                </div>
+              </div>
             </GlassCard>
           </div>
 
           <div className="lg:col-span-3">
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-white/80">{t('directory.showing')} {filteredBusinesses.length} {t('directory.businesses')}</p>
-              <div className="flex items-center gap-2 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-1">
-                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary' : 'hover:bg-white/10'}`}><Grid3x3 className="w-5 h-5 text-white" /></button>
-                <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-primary' : 'hover:bg-white/10'}`}><List className="w-5 h-5 text-white" /></button>
-              </div>
-            </div>
-            
-            {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                    <p className="text-white/40 text-sm animate-pulse">{t('directory.loading')}</p>
-                </div>
-            ) : error ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
-                        <ArrowLeft className="w-8 h-8 text-red-400 rotate-180" />
+            {isLoading && businessesData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32 gap-6">
+                    <div className="relative">
+                        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                        </div>
                     </div>
-                    <h3 className="text-white font-semibold text-lg mb-2">{t('directory.errorTitle')}</h3>
-                    <p className="text-white/60 text-sm mb-6 max-w-xs mx-auto">{error}</p>
-                    <button 
-                        onClick={() => fetchBusinesses()} 
-                        className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
-                    >
-                        {t('directory.retry')}
-                    </button>
-                </div>
-            ) : filteredBusinesses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                        <MapPin className="w-8 h-8 text-white/20" />
-                    </div>
-                    <h3 className="text-white font-semibold text-lg mb-2">{t('directory.noResultsTitle')}</h3>
-                    <p className="text-white/60 text-sm max-w-xs mx-auto">
-                        {t('directory.noResultsDesc')}
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] animate-pulse">
+                        {t('directory.loading') || 'Scanning directory...'}
                     </p>
                 </div>
+            ) : error ? (
+                <div className="flex flex-col items-center justify-center py-32 text-center px-6">
+                    <div className="w-24 h-24 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-8 rotate-12">
+                        <ArrowLeft className="w-10 h-10 text-red-500 rotate-180" />
+                    </div>
+                    <h3 className="text-3xl font-black text-white tracking-tighter mb-4">
+                        {t('directory.errorTitle') || 'Connection Interrupted'}
+                    </h3>
+                    <p className="text-white/40 font-medium mb-10 max-w-sm mx-auto">
+                        {error}
+                    </p>
+                    <button 
+                        onClick={() => fetchBusinesses()} 
+                        className="px-12 py-4 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-[0.3em] hover:shadow-glow-white/20 transition-all active:scale-95"
+                    >
+                        {t('directory.retry') || 'Try Again'}
+                    </button>
+                </div>
+            ) : businessesData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32 text-center px-6">
+                    <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 -rotate-12">
+                        <MapPin className="w-10 h-10 text-white/20" />
+                    </div>
+                    <h3 className="text-3xl font-black text-white tracking-tighter mb-4">
+                        {t('directory.noResultsTitle') || 'No Matches Found'}
+                    </h3>
+                    <p className="text-white/40 font-medium max-w-sm mx-auto mb-10">
+                        {t('directory.noResultsDesc') || "We couldn't find any businesses matching your current filters. Try adjusting your search."}
+                    </p>
+                    <button 
+                        onClick={() => setFilters({ category: 'all', rating: 0, city: '', governorate: 'all' })}
+                        className="px-12 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-[0.3em] hover:bg-white/10 transition-all active:scale-95"
+                    >
+                        {t('directory.reset') || 'Clear Filters'}
+                    </button>
+                </div>
             ) : (
-                <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-6' : 'space-y-4'}>
-                    {filteredBusinesses.map((business) => (<BusinessCard key={business.id} business={business} viewMode={viewMode} />))}
+                <div className="space-y-12">
+                    <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-8' : 'space-y-6'}>
+                        {businessesData.map((business, index) => (
+                            <motion.div
+                                key={business.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index % 10 * 0.05 }}
+                            >
+                                <BusinessCard business={business} viewMode={viewMode} />
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* Load More Section */}
+                    <div className="pt-12 text-center">
+                        {hasMore ? (
+                            <button 
+                                disabled={isLoading}
+                                onClick={() => fetchBusinesses(true)}
+                                className="group relative px-12 py-5 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-[0.3em] overflow-hidden transition-all duration-500 hover:bg-white/10 hover:border-primary/50 hover:shadow-glow-primary/20 active:scale-95 disabled:opacity-50"
+                            >
+                                <div className="relative z-10 flex items-center justify-center gap-4">
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                                            <span>{t('directory.loadingMore') || 'Fetching...'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>{t('directory.loadMore') || 'Explore more businesses'}</span>
+                                            <motion.span
+                                                animate={{ y: [0, 5, 0] }}
+                                                transition={{ repeat: Infinity, duration: 2 }}
+                                            >
+                                                ↓
+                                            </motion.span>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                            </button>
+                        ) : (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-12 h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full" />
+                                <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.4em]">
+                                    {t('directory.endOfList') || 'You have reached the end'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
-
-            {isLoading ? <div className="flex flex-col items-center justify-center py-20 gap-4"><div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div><p className="text-white/40 text-sm animate-pulse">{t('directory.loading')}</p></div> : error ? <div className="flex flex-col items-center justify-center py-20 text-center"><h3 className="text-white font-semibold text-lg mb-2">{t('directory.errorTitle')}</h3><p className="text-white/60 text-sm mb-6 max-w-xs mx-auto">{error}</p><button onClick={() => fetchBusinesses()} className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all cursor-pointer">{t('directory.retry')}</button></div> : businessesData.length === 0 ? <div className="flex flex-col items-center justify-center py-20 text-center"><div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4"><MapPin className="w-8 h-8 text-white/20" /></div><h3 className="text-white font-semibold text-lg mb-2">Be the first to add a business</h3><p className="text-white/60 text-sm max-w-xs mx-auto">No results for current filters. Try another city or category.</p></div> : <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-6' : 'space-y-4'}>{businessesData.map((business) => <BusinessCard key={business.id} business={business} viewMode={viewMode} />)}</div>}
-
-            <div className="mt-12">
-              {hasMore ? <button disabled={isLoading} onClick={() => fetchBusinesses(true)} className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary disabled:opacity-50 transition-all cursor-pointer">{isLoading ? t('directory.loading') : 'Explore more businesses'}</button> : businessesData.length > 0 ? <p className="text-center text-white/60">You reached the end</p> : null}
-            </div>
           </div>
         </div>
       </div>

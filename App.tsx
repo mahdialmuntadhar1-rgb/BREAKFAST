@@ -76,7 +76,6 @@ const MainContent: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authView, setAuthView] = useState<'signin' | 'signup' | 'forgot' | 'reset'>('signin');
   const [page, setPage] = useState<'home' | 'dashboard' | 'listing'>('home');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -221,6 +220,22 @@ const MainContent: React.FC = () => {
     }
   };
 
+  const handleSeeAll = (type: 'businesses' | 'deals' | 'events' | 'posts') => {
+    if (type === 'businesses') {
+      setListingFilter({});
+      setPage('listing');
+    } else if (type === 'deals') {
+      setListingFilter({ categoryId: 'retail' }); // Example: Retail often has deals
+      setPage('listing');
+    } else if (type === 'events') {
+      setListingFilter({ categoryId: 'entertainment' }); // Example: Entertainment often has events
+      setPage('listing');
+    } else if (type === 'posts') {
+      // For now, let's just go to listing as a fallback
+      setPage('listing');
+    }
+  };
+
   if (!isAuthReady) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
@@ -261,6 +276,7 @@ const MainContent: React.FC = () => {
                 onGovernorateChange={handleGovernorateChange}
                 highContrast={highContrast}
                 setHighContrast={setHighContrast}
+                onSeeAll={handleSeeAll}
               />
             </motion.div>
           )}

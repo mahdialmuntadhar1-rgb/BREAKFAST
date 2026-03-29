@@ -38,24 +38,33 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick, cur
     );
 
     return (
-        <div className="container mx-auto px-4 py-12">
-            <div className="text-center mb-8">
+        <div className="container mx-auto px-4 py-24">
+            <div className="flex flex-col items-center text-center mb-16 space-y-4">
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-[10px] font-black uppercase tracking-[0.2em]"
+                >
+                    <Sparkles className="w-3 h-3" />
+                    {t('categories.badge') || 'Trending Now'}
+                </motion.div>
                 <motion.h2 
-                    initial={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="text-3xl font-bold text-white mb-2"
+                    className="text-5xl md:text-6xl font-black text-white tracking-tighter"
                 >
-                    {t('categories.title')}
+                    {t('categories.title') || 'Explore by Category'}
                 </motion.h2>
                 <motion.p 
-                    initial={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.1 }}
-                    className="text-white/60"
+                    className="text-white/40 font-medium max-w-xl"
                 >
-                    {t('categories.subtitle')}
+                    {t('categories.subtitle') || 'Find exactly what you need, from local delicacies to essential services.'}
                 </motion.p>
             </div>
 

@@ -110,16 +110,6 @@ export interface User {
   avatar: string;
   role: 'owner' | 'user' | 'admin';
   businessId?: string;
-  preferredLanguage?: 'en' | 'ar' | 'ku';
-  businessProfile?: {
-    businessName?: string;
-    category?: string;
-    phone?: string;
-    address?: string;
-    governorate?: string;
-    city?: string;
-    socialLinks?: { website?: string; instagram?: string; facebook?: string };
-  };
   updatedAt?: any;
 }
 

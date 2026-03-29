@@ -148,7 +148,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                                 <div>
                                     <label className="block text-white/70 text-sm mb-2">{t('auth.newPassword')}</label>
                                     <input name="password" type="password" placeholder="********" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/40 outline-none cursor-not-allowed" disabled />
-                                    <p className="text-[10px] text-white/30 mt-1">Use forgot-password on sign-in to update your password securely</p>
+                                    <p className="text-[10px] text-white/30 mt-1">Password changes are handled via Google Account</p>
                                 </div>
                                 <button type="submit" className="w-full !mt-6 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary transition-all">
                                     {t('dashboard.saveChanges')}

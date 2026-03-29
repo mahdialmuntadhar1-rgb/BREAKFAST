@@ -57,7 +57,13 @@ import {
   Mail,
   Lock,
   Phone,
-  Building2
+  Building,
+  Map,
+  Info,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ArrowRight
 } from 'lucide-react';
 
 export {
@@ -119,6 +125,12 @@ export {
   Mail,
   Lock,
   Phone,
-  Building2
+  Building,
+  Map,
+  Info,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ArrowRight
 };
 

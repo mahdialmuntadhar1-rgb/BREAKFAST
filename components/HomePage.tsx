@@ -11,6 +11,7 @@ import { CommunityStories } from './CommunityStories';
 import { CityGuide } from './CityGuide';
 import { InclusiveFeatures } from './InclusiveFeatures';
 import { FooterSection } from './FooterSection';
+import { useTranslations } from '../hooks/useTranslations';
 import type { Post, Category } from '../types';
 
 interface HomePageProps {
@@ -25,17 +26,8 @@ interface HomePageProps {
   onGovernorateChange: (gov: string) => void;
   highContrast: boolean;
   setHighContrast: (val: boolean) => void;
+  onSeeAll: (type: 'businesses' | 'deals' | 'events' | 'posts') => void;
 }
-
-const SectionHeader: React.FC<{ title: string; subtitle: string; cta: string }> = ({ title, subtitle, cta }) => (
-  <div className="container mx-auto px-4 mb-8 flex items-end justify-between gap-4">
-    <div>
-      <h2 className="text-3xl font-bold text-white tracking-tight">{title}</h2>
-      <p className="text-white/60 mt-2">{subtitle}</p>
-    </div>
-    <button className="text-sm text-primary hover:text-secondary transition-colors hover:underline cursor-pointer">{cta}</button>
-  </div>
-);
 
 export const HomePage: React.FC<HomePageProps> = ({
   posts,
@@ -49,13 +41,15 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGovernorateChange,
   highContrast,
   setHighContrast,
+  onSeeAll,
 }) => {
+  const { t } = useTranslations();
+
   return (
     <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
-      <HeroSection />
+      <HeroSection onExplore={() => onSeeAll('businesses')} />
       <StoriesRing />
-
-      <SectionHeader title="Trending categories" subtitle="Explore what people in Iraq are searching for right now." cta="See all" />
+      
       <CategoriesSection 
         onCategoryClick={onCategoryClick} 
         currentPage={currentPage}
@@ -63,44 +57,35 @@ export const HomePage: React.FC<HomePageProps> = ({
       />
 
       <div className="container mx-auto px-4 py-24 relative">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-          <BusinessGridSection 
-            posts={posts} 
-            isLoading={isSocialLoading} 
-            isLoggedIn={isLoggedIn}
-            selectedGovernorate={selectedGovernorate}
-          />
-
-          <SearchSection 
-            onSearch={onSearch} 
-            selectedGovernorate={selectedGovernorate}
-            onGovernorateChange={onGovernorateChange}
-          />
-        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+              <BusinessGridSection 
+                posts={posts} 
+                isLoading={isSocialLoading} 
+                isLoggedIn={isLoggedIn} 
+                onSeeAll={() => onSeeAll('posts')}
+              />
+              
+              <SearchSection 
+                onSearch={onSearch} 
+                selectedGovernorate={selectedGovernorate}
+                onGovernorateChange={onGovernorateChange}
+              />
+          </div>
       </div>
 
-      <SectionHeader title="Featured businesses" subtitle="Premium and verified places worth visiting this week." cta="See all" />
-      <FeaturedSection />
-
-      <div className="space-y-28 py-24">
-        <div>
-          <SectionHeader title="Events" subtitle="Discover upcoming experiences in your area." cta="See all" />
-          <PersonalizedEvents selectedGovernorate={selectedGovernorate} />
-        </div>
-        <div>
-          <SectionHeader title="Deals" subtitle="Fresh offers and discounts around your city." cta="See all" />
-          <DealsMarketplace selectedGovernorate={selectedGovernorate} />
-        </div>
-        <div>
-          <SectionHeader title="Community stories" subtitle="Real stories shared by people and businesses." cta="See all" />
-          <CommunityStories selectedGovernorate={selectedGovernorate} />
-        </div>
-        <CityGuide />
+      <FeaturedSection onSeeAll={() => onSeeAll('businesses')} />
+      
+      <div className="space-y-32 py-24">
+        <PersonalizedEvents onSeeAll={() => onSeeAll('events')} />
+        <DealsMarketplace onSeeAll={() => onSeeAll('deals')} />
+        <CommunityStories onSeeAll={() => onSeeAll('posts')} />
+        <CityGuide onGovernorateSelect={onGovernorateChange} />
       </div>
 
       <InclusiveFeatures highContrast={highContrast} setHighContrast={setHighContrast} />
-
+      
       <FooterSection />
     </div>
   );
 };
+
