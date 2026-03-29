@@ -1,9 +1,10 @@
 import React from 'react';
 import { heroSlides } from '../constants';
 import { useTranslations } from '../hooks/useTranslations';
+import { Sparkles } from './icons';
 import { motion, AnimatePresence } from 'motion/react';
 
-export const HeroSection: React.FC<{ onExploreNow?: () => void; onLearnMore?: () => void; }> = ({ onExploreNow, onLearnMore }) => {
+export const HeroSection: React.FC = () => {
     const [activeSlide, setActiveSlide] = React.useState(0);
     const { t } = useTranslations();
 
@@ -42,23 +43,58 @@ export const HeroSection: React.FC<{ onExploreNow?: () => void; onLearnMore?: ()
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.6, delay: 0.2 }}
-                        className="max-w-4xl mx-auto"
+                        className="max-w-5xl mx-auto"
                     >
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.4 }}
+                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 text-xs md:text-sm font-medium text-secondary-glow"
+                        >
+                            <Sparkles className="w-4 h-4 text-secondary" />
+                            <span className="tracking-wider uppercase">{t('hero.badge') || 'AI-Powered Discovery'}</span>
+                        </motion.div>
+
                         <h1 className="text-5xl lg:text-8xl font-bold mb-6 text-white tracking-tight leading-tight">
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent drop-shadow-2xl">
                                 {t(heroSlides[activeSlide].titleKey)}
                             </span>
                         </h1>
-                        <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-2xl mx-auto font-light leading-relaxed">
+                        <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-3xl mx-auto font-light leading-relaxed">
                             {t(heroSlides[activeSlide].subtitleKey)}
                         </p>
-                        <div className="flex flex-wrap gap-4 justify-center">
-                            <button onClick={onExploreNow} className="px-8 py-4 rounded-full bg-primary text-white font-semibold hover:shadow-glow-primary transition-all duration-300 transform hover:scale-105">
-                                {t('actions.exploreNow') || 'Explore Now'}
+                        
+                        <div className="flex flex-wrap gap-4 justify-center mb-16">
+                            <button className="group relative px-10 py-4 rounded-full bg-primary text-white font-bold overflow-hidden transition-all duration-300 hover:shadow-glow-primary hover:scale-105 active:scale-95">
+                                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                <span className="relative z-10 flex items-center gap-2">
+                                    {t('actions.exploreNow') || 'Explore Now'}
+                                    <motion.span animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>→</motion.span>
+                                </span>
                             </button>
-                            <button onClick={onLearnMore} className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-300">
+                            <button className="px-10 py-4 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 text-white font-semibold hover:bg-white/10 hover:border-white/20 transition-all duration-300 active:scale-95">
                                 {t('actions.learnMore') || 'Learn More'}
                             </button>
+                        </div>
+
+                        {/* Mini Stats Row */}
+                        <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-3xl mx-auto pt-8 border-t border-white/5">
+                            {[
+                                { label: t('stats.businesses') || 'Businesses', value: '12,000+' },
+                                { label: t('stats.cities') || 'Cities', value: '18' },
+                                { label: t('stats.categories') || 'Categories', value: '45+' }
+                            ].map((stat, i) => (
+                                <motion.div 
+                                    key={i}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.6 + (i * 0.1) }}
+                                    className="text-center"
+                                >
+                                    <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</div>
+                                    <div className="text-[10px] md:text-xs uppercase tracking-widest text-white/40 font-semibold">{stat.label}</div>
+                                </motion.div>
+                            ))}
                         </div>
                     </motion.div>
                 </AnimatePresence>

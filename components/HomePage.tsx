@@ -26,10 +26,6 @@ interface HomePageProps {
   onGovernorateChange: (gov: string) => void;
   highContrast: boolean;
   setHighContrast: (val: boolean) => void;
-  onOpenAuth: () => void;
-  onExploreDirectory: () => void;
-  hasMorePosts?: boolean;
-  onLoadMorePosts?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -44,16 +40,12 @@ export const HomePage: React.FC<HomePageProps> = ({
   onGovernorateChange,
   highContrast,
   setHighContrast,
-  onOpenAuth,
-  onExploreDirectory,
-  hasMorePosts,
-  onLoadMorePosts,
 }) => {
   const { t } = useTranslations();
 
   return (
     <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
-      <HeroSection onExploreNow={onExploreDirectory} onLearnMore={onOpenAuth} />
+      <HeroSection />
       <StoriesRing />
       
       <CategoriesSection 
@@ -67,9 +59,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <BusinessGridSection 
                 posts={posts} 
                 isLoading={isSocialLoading} 
-                isLoggedIn={isLoggedIn}
-                hasMorePosts={hasMorePosts}
-                onLoadMorePosts={onLoadMorePosts}
+                isLoggedIn={isLoggedIn} 
               />
               
               <SearchSection 
