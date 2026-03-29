@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { categories, governorates } from '../constants';
 import { api } from '../services/api';
 import type { Business } from '../types';
@@ -19,8 +18,9 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode }) => {
                       lang === 'ku' && business.nameKu ? business.nameKu : 
                       business.name;
                       
-  const displayImage = business.imageUrl || business.image || business.coverImage || 'https://picsum.photos/seed/placeholder/400/300';
-  const displayReviews = business.reviewCount ?? business.reviews ?? 0;
+  const legacyBusiness = business as Business & { image?: string; reviews?: number };
+  const displayImage = business.imageUrl || legacyBusiness.image || business.coverImage || 'https://picsum.photos/seed/placeholder/400/300';
+  const displayReviews = business.reviewCount ?? legacyBusiness.reviews ?? 0;
   const isVerified = business.isVerified ?? false;
 
   if (viewMode === 'list') {
@@ -77,8 +77,8 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pageSize] = useState(20);
   const [businessesData, setBusinessesData] = useState<Business[]>([]);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(undefined);
   const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslations();
@@ -106,13 +106,13 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
             category: filters.category,
             city: filters.city,
             governorate: filters.governorate,
-            lastDoc: isLoadMore ? lastDoc : undefined,
+            page: isLoadMore ? page + 1 : 0,
             limit: pageSize
         });
         
         setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
-        setLastDoc(result.lastDoc);
         setHasMore(result.hasMore);
+        setPage(prev => (isLoadMore ? prev + 1 : 0));
     } catch (err) {
         console.error('Error fetching businesses:', err);
         setError(t('directory.errorLoading'));
