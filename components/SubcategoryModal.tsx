@@ -17,6 +17,7 @@ const AccordionItem: React.FC<{
 }> = ({ group, category, onSubcategorySelect }) => {
   const [isOpen, setIsOpen] = useState(true);
   const { t } = useTranslations();
+  const panelId = `subcategory-group-panel-${category.id}-${group.id}`;
   
   return (
      <div className="border-b border-white/10 last:border-b-0">
@@ -24,6 +25,7 @@ const AccordionItem: React.FC<{
           className="w-full flex justify-between items-center py-4 text-start rtl:text-right"
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
+          aria-controls={panelId}
         >
           <div className="flex items-center gap-3">
             <span className="text-2xl">{group.icon}</span>
@@ -32,7 +34,7 @@ const AccordionItem: React.FC<{
           <ChevronDown className={`w-5 h-5 text-white/70 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
         {isOpen && (
-          <div className="pb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div id={panelId} className="pb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
              {group.subcategories?.map((sub) => (
               <GlassCard
                 as="button"

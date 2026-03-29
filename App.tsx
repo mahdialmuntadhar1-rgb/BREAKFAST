@@ -6,8 +6,6 @@ import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
 import { HomePage } from './components/HomePage';
 import { api } from './services/api';
-import { auth } from './firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User, Category, Subcategory, Post } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
@@ -74,7 +72,7 @@ const MainContent: React.FC = () => {
   const { t } = useTranslations();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [page, setPage] = useState<'home' | 'dashboard' | 'listing'>('home');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -90,53 +88,6 @@ const MainContent: React.FC = () => {
     }
     return false;
   });
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!isMounted) return;
-      
-      try {
-        if (firebaseUser) {
-          // Retrieve the role from sessionStorage if it was set during the AuthModal flow
-          const pendingRole = sessionStorage.getItem('pending_role') as 'user' | 'owner' | null;
-          const user = await api.getOrCreateProfile(firebaseUser, pendingRole || 'user');
-          if (isMounted) {
-            setCurrentUser(user);
-            setIsLoggedIn(!!user);
-          }
-          sessionStorage.removeItem('pending_role');
-        } else {
-          if (isMounted) {
-            setCurrentUser(null);
-            setIsLoggedIn(false);
-          }
-        }
-      } catch (err) {
-        console.error("Auth state change error:", err);
-      } finally {
-        if (isMounted) {
-          setIsAuthReady(true);
-        }
-      }
-    });
-
-    // Safety timeout: If Firebase doesn't respond within 4 seconds, 
-    // we proceed to the app anyway to avoid a stuck loading screen.
-    const timeoutId = setTimeout(() => {
-      if (isMounted && !isAuthReady) {
-        console.warn("Auth initialization timed out. Proceeding...");
-        setIsAuthReady(true);
-      }
-    }, 4000);
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-      clearTimeout(timeoutId);
-    };
-  }, [isAuthReady]);
 
   useEffect(() => {
     setIsSocialLoading(true);
@@ -167,15 +118,20 @@ const MainContent: React.FC = () => {
   }, [highContrast]);
 
   const handleLogin = (role: 'user' | 'owner') => {
-    // Auth is handled in AuthModal via signInWithPopup, 
-    // which triggers onAuthStateChanged above.
-    // We store the role in sessionStorage to be picked up by the listener.
-    sessionStorage.setItem('pending_role', role);
+    const mockUser: User = {
+      id: `local-${Date.now()}`,
+      name: role === 'owner' ? 'Business Owner' : 'User',
+      email: `${role}@local.app`,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${role}`,
+      role,
+      businessId: role === 'owner' ? `b_${Date.now()}` : null,
+    };
+    setCurrentUser(mockUser);
+    setIsLoggedIn(true);
     setShowAuthModal(false);
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
     setIsLoggedIn(false);
     setCurrentUser(null);
     setPage('home');
