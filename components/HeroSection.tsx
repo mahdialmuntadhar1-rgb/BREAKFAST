@@ -16,7 +16,7 @@ export const HeroSection: React.FC = () => {
     }, []);
 
     return (
-        <section className="relative h-[70vh] md:h-[85vh] w-full overflow-hidden flex flex-col justify-center items-center">
+        <section className="relative h-[75vh] md:h-[88vh] w-full overflow-hidden flex flex-col justify-center items-center">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={activeSlide}
@@ -31,7 +31,7 @@ export const HeroSection: React.FC = () => {
                         alt={t(heroSlides[activeSlide].titleKey)} 
                         className="absolute inset-0 w-full h-full object-cover scale-105" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-dark-bg/40 via-dark-bg/60 to-dark-bg"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-dark-bg/30 via-dark-bg/70 to-dark-bg"></div>
                 </motion.div>
             </AnimatePresence>
 
@@ -52,37 +52,37 @@ export const HeroSection: React.FC = () => {
                             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 text-xs md:text-sm font-medium text-secondary-glow"
                         >
                             <Sparkles className="w-4 h-4 text-secondary" />
-                            <span className="tracking-wider uppercase">{t('hero.badge') || 'AI-Powered Discovery'}</span>
+                            <span className="tracking-wider uppercase">Iraq Compass</span>
                         </motion.div>
 
                         <h1 className="text-5xl lg:text-8xl font-bold mb-6 text-white tracking-tight leading-tight">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent drop-shadow-2xl">
-                                {t(heroSlides[activeSlide].titleKey)}
+                                Your city, curated beautifully.
                             </span>
                         </h1>
-                        <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-3xl mx-auto font-light leading-relaxed">
-                            {t(heroSlides[activeSlide].subtitleKey)}
+                        <p className="text-xl md:text-2xl text-white/85 mb-10 max-w-3xl mx-auto font-light leading-relaxed">
+                            Find trusted businesses, fresh offers, and local events in minutes — with smarter recommendations across Iraq.
                         </p>
                         
                         <div className="flex flex-wrap gap-4 justify-center mb-16">
-                            <button className="group relative px-10 py-4 rounded-full bg-primary text-white font-bold overflow-hidden transition-all duration-300 hover:shadow-glow-primary hover:scale-105 active:scale-95">
+                            <a href="#explore-sections" className="group relative px-10 py-4 rounded-full bg-primary text-white font-bold overflow-hidden transition-all duration-300 hover:shadow-glow-primary hover:scale-105 active:scale-95 cursor-pointer">
                                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                 <span className="relative z-10 flex items-center gap-2">
-                                    {t('actions.exploreNow') || 'Explore Now'}
+                                    Explore businesses
                                     <motion.span animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>→</motion.span>
                                 </span>
-                            </button>
-                            <button className="px-10 py-4 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 text-white font-semibold hover:bg-white/10 hover:border-white/20 transition-all duration-300 active:scale-95">
-                                {t('actions.learnMore') || 'Learn More'}
-                            </button>
+                            </a>
+                            <a href="#join-signup" className="px-10 py-4 rounded-full bg-white/5 backdrop-blur-xl border border-white/20 text-white font-semibold hover:bg-white/10 hover:border-white/40 transition-all duration-300 active:scale-95 cursor-pointer">
+                                Join / Sign up
+                            </a>
                         </div>
 
-                        {/* Mini Stats Row */}
-                        <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-3xl mx-auto pt-8 border-t border-white/5">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl mx-auto pt-8 border-t border-white/10">
                             {[
-                                { label: t('stats.businesses') || 'Businesses', value: '12,000+' },
-                                { label: t('stats.cities') || 'Cities', value: '18' },
-                                { label: t('stats.categories') || 'Categories', value: '45+' }
+                                { label: 'Businesses', value: '6000+' },
+                                { label: 'Governorates', value: '18' },
+                                { label: 'Categories', value: '45+' },
+                                { label: 'Active deals', value: '1200+' }
                             ].map((stat, i) => (
                                 <motion.div 
                                     key={i}
@@ -92,7 +92,7 @@ export const HeroSection: React.FC = () => {
                                     className="text-center"
                                 >
                                     <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.value}</div>
-                                    <div className="text-[10px] md:text-xs uppercase tracking-widest text-white/40 font-semibold">{stat.label}</div>
+                                    <div className="text-[10px] md:text-xs uppercase tracking-widest text-white/50 font-semibold">{stat.label}</div>
                                 </motion.div>
                             ))}
                         </div>
@@ -105,7 +105,7 @@ export const HeroSection: React.FC = () => {
                     <button 
                         key={index} 
                         onClick={() => setActiveSlide(index)} 
-                        className={`group relative h-1.5 transition-all duration-500 rounded-full overflow-hidden ${activeSlide === index ? 'w-12 bg-primary' : 'w-6 bg-white/20 hover:bg-white/40'}`} 
+                        className={`group relative h-1.5 transition-all duration-500 rounded-full overflow-hidden cursor-pointer ${activeSlide === index ? 'w-12 bg-primary' : 'w-6 bg-white/20 hover:bg-white/40'}`} 
                         aria-label={`Go to slide ${index + 1}`}
                     >
                         {activeSlide === index && (

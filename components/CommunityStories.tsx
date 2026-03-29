@@ -10,6 +10,7 @@ export const CommunityStories: React.FC = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(8);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export const CommunityStories: React.FC = () => {
       try {
         const data = await api.getStories();
         setStories(data);
+        setVisibleCount(8);
       } catch (error) {
         console.error('Error fetching stories:', error);
       } finally {
@@ -68,7 +70,7 @@ export const CommunityStories: React.FC = () => {
               <p className="text-white text-xs font-black uppercase tracking-widest">{t('stories.noStories') || "No stories shared yet."}</p>
             </div>
           ) : (
-            stories.map((story, index) => (
+            stories.slice(0, visibleCount).map((story, index) => (
             <motion.div 
                 key={story.id} 
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -133,6 +135,15 @@ export const CommunityStories: React.FC = () => {
                 <span className="text-white/20 text-[8px] font-black uppercase tracking-widest block">Share your moment</span>
             </div>
           </motion.div>
+
+        {stories.length > visibleCount && (
+          <div className="col-span-full rounded-2xl border border-white/15 bg-white/[0.03] p-4 mt-2">
+            <button onClick={() => setVisibleCount(prev => prev + 6)} className="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary transition-all cursor-pointer">Load more stories</button>
+          </div>
+        )}
+        {stories.length > 0 && stories.length <= visibleCount && (
+          <p className="col-span-full text-center text-white/60 text-sm">You reached the end.</p>
+        )}
         </div>
       </div>
       {activeStory && <StoryViewer story={activeStory} onClose={() => setActiveStory(null)} />}
