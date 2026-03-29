@@ -9,12 +9,14 @@ interface SocialFeedProps {
     posts: Post[];
     isLoading?: boolean;
     isLoggedIn?: boolean;
+    hasMore?: boolean;
+    onLoadMore?: () => void;
     onLike?: (postId: string) => void;
     onComment?: (postId: string) => void;
     onShare?: (postId: string) => void;
 }
 
-export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLoggedIn, onLike, onComment, onShare }) => {
+export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLoggedIn, hasMore, onLoadMore, onLike, onComment, onShare }) => {
     const { t, lang } = useTranslations();
     const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
@@ -161,6 +163,13 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                     ))
                 )}
             </AnimatePresence>
+            {hasMore && onLoadMore && (
+                <div className="pt-4 flex justify-center">
+                    <button onClick={onLoadMore} className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition">
+                        {t('directory.loadMore')}
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
