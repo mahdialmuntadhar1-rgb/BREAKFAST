@@ -6,6 +6,8 @@ import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
 import { HomePage } from './components/HomePage';
 import { api } from './services/api';
+import { auth } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User, Category, Subcategory, Post } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
@@ -90,24 +92,51 @@ const MainContent: React.FC = () => {
   });
 
   useEffect(() => {
-    const boot = async () => {
+    let isMounted = true;
+    
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!isMounted) return;
+      
       try {
-        const storedId = localStorage.getItem('iraq-compass-user-id');
-        const storedRole = (localStorage.getItem('iraq-compass-user-role') as 'user' | 'owner' | 'admin' | null) || null;
-        if (storedId) {
-          const user = await api.getProfile(storedId, storedRole || 'user');
-          setCurrentUser(user);
-          setIsLoggedIn(!!user);
+        if (firebaseUser) {
+          // Retrieve the role from sessionStorage if it was set during the AuthModal flow
+          const pendingRole = sessionStorage.getItem('pending_role') as 'user' | 'owner' | null;
+          const user = await api.getOrCreateProfile(firebaseUser, pendingRole || 'user');
+          if (isMounted) {
+            setCurrentUser(user);
+            setIsLoggedIn(!!user);
+          }
+          sessionStorage.removeItem('pending_role');
+        } else {
+          if (isMounted) {
+            setCurrentUser(null);
+            setIsLoggedIn(false);
+          }
         }
       } catch (err) {
-        console.error('Auth bootstrap error:', err);
+        console.error("Auth state change error:", err);
       } finally {
+        if (isMounted) {
+          setIsAuthReady(true);
+        }
+      }
+    });
+
+    // Safety timeout: If Firebase doesn't respond within 4 seconds, 
+    // we proceed to the app anyway to avoid a stuck loading screen.
+    const timeoutId = setTimeout(() => {
+      if (isMounted && !isAuthReady) {
+        console.warn("Auth initialization timed out. Proceeding...");
         setIsAuthReady(true);
       }
-    };
+    }, 4000);
 
-    void boot();
-  }, []);
+    return () => {
+      isMounted = false;
+      unsubscribe();
+      clearTimeout(timeoutId);
+    };
+  }, [isAuthReady]);
 
   useEffect(() => {
     setIsSocialLoading(true);
@@ -137,26 +166,16 @@ const MainContent: React.FC = () => {
     }
   }, [highContrast]);
 
-  const handleLogin = async (role: 'user' | 'owner') => {
-    const mockAuthUser = {
-      uid: `local-${Date.now()}`,
-      email: role === 'owner' ? 'owner@iraqcompass.app' : 'user@iraqcompass.app',
-      displayName: role === 'owner' ? 'Business Owner' : 'Explorer User',
-      photoURL: null,
-      emailVerified: true,
-    };
-
-    const user = await api.getOrCreateProfile(mockAuthUser, role);
-    setCurrentUser(user);
-    setIsLoggedIn(!!user);
-    localStorage.setItem('iraq-compass-user-id', user.id);
-    localStorage.setItem('iraq-compass-user-role', user.role);
+  const handleLogin = (role: 'user' | 'owner') => {
+    // Auth is handled in AuthModal via signInWithPopup, 
+    // which triggers onAuthStateChanged above.
+    // We store the role in sessionStorage to be picked up by the listener.
+    sessionStorage.setItem('pending_role', role);
     setShowAuthModal(false);
   };
 
   const handleLogout = async () => {
-    localStorage.removeItem('iraq-compass-user-id');
-    localStorage.removeItem('iraq-compass-user-role');
+    await signOut(auth);
     setIsLoggedIn(false);
     setCurrentUser(null);
     setPage('home');

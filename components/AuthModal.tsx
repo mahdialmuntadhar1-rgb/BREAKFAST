@@ -119,8 +119,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
     
     const currentStepIndex = steps.indexOf(step);
     const progress = ((currentStepIndex + 1) / steps.length) * 100;
-    const titleId = 'auth-modal-title';
-    const descriptionId = 'auth-modal-description';
 
     return (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -128,10 +126,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 className="relative w-full max-w-xl bg-dark-bg border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={titleId}
-                aria-describedby={descriptionId}
             >
                 {/* Progress Bar */}
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-white/5">
@@ -145,7 +139,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                 <button 
                     onClick={onClose} 
                     className="absolute top-6 right-6 w-10 h-10 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all z-10"
-                    aria-label="Close authentication modal"
                 >
                     <X className="w-5 h-5 text-white/50" />
                 </button>
@@ -161,8 +154,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                                 className="space-y-8"
                             >
                                 <div className="text-center space-y-2">
-                                    <h2 id={titleId} className="text-3xl font-black text-white tracking-tighter">{t('auth.chooseRole') || 'Join Iraq Compass'}</h2>
-                                    <p id={descriptionId} className="text-white/40 font-medium">{t('auth.roleSubtitle') || 'Tell us how you want to use the platform'}</p>
+                                    <h2 className="text-3xl font-black text-white tracking-tighter">{t('auth.chooseRole') || 'Join Iraq Compass'}</h2>
+                                    <p className="text-white/40 font-medium">{t('auth.roleSubtitle') || 'Tell us how you want to use the platform'}</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
