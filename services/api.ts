@@ -1,352 +1,122 @@
-import { 
-    collection, 
-    getDocs, 
-    query, 
-    where, 
-    limit, 
-    startAfter, 
-    orderBy, 
-    addDoc, 
-    serverTimestamp, 
-    doc, 
-    getDoc, 
-    setDoc,
-    getDocFromServer,
-    Timestamp,
-    onSnapshot,
-    QueryDocumentSnapshot,
-    DocumentData
-} from 'firebase/firestore';
-import { db, auth } from '../firebase';
-import type { Business, Post, User, BusinessPostcard } from '../types';
-import * as mockData from '../constants';
-import firebaseConfig from '../firebase-applet-config.json';
+import { supabase, type SupabaseAuthUser } from './supabase';
+import type { Business, BusinessPostcard, Deal, Event, Post, Story, User } from '../types';
 
-const isConfigValid = firebaseConfig.projectId && !firebaseConfig.projectId.startsWith('remixed-');
+interface PaginatedResult<T> { data: T[]; hasMore: boolean; nextPage: number }
 
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
+const paged = async <T>(table: string, page: number, limit: number, map: (row: any) => T, opts?: { filters?: string[]; order?: { column: string; ascending?: boolean } }) => {
+  const from = page * limit;
+  const to = from + limit;
+  const rows = await supabase.db.select(table, { filters: opts?.filters, order: opts?.order, range: { from, to } });
+  const data = (rows as any[]).map(map);
+  return { data, hasMore: data.length > limit - 1, nextPage: page + 1 } as PaginatedResult<T>;
+};
 
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
-    }[];
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
-}
-
-// Test connection
-async function testConnection() {
-  if (!isConfigValid) return;
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. ");
-    }
-  }
-}
-testConnection();
+const toDate = (value: unknown) => {
+  const parsed = new Date(String(value ?? Date.now()));
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+};
 
 export const api = {
-    async getBusinesses(params: { category?: string; city?: string; governorate?: string; lastDoc?: QueryDocumentSnapshot<DocumentData>; limit?: number; featuredOnly?: boolean } = {}) {
-        if (!isConfigValid) {
-            let filtered = [...mockData.businesses];
-            if (params.featuredOnly) filtered = filtered.filter(b => b.isFeatured);
-            if (params.category && params.category !== 'all') filtered = filtered.filter(b => b.category === params.category);
-            if (params.governorate && params.governorate !== 'all') filtered = filtered.filter(b => b.governorate === params.governorate);
-            return { data: filtered.slice(0, params.limit || 20), hasMore: false };
-        }
+  async getBusinesses(params: { category?: string; city?: string; governorate?: string; page?: number; limit?: number; featuredOnly?: boolean } = {}): Promise<PaginatedResult<Business>> {
+    const filters: string[] = [];
+    if (params.category && params.category !== 'all') filters.push(`category=eq.${encodeURIComponent(params.category)}`);
+    if (params.governorate && params.governorate !== 'all') filters.push(`governorate=eq.${encodeURIComponent(params.governorate)}`);
+    if (params.featuredOnly) filters.push('is_featured=eq.true');
+    if (params.city?.trim()) filters.push(`city=ilike.*${encodeURIComponent(params.city.trim())}*`);
 
-        const path = 'businesses';
-        try {
-            // ... (rest of the existing getBusinesses logic)
-            let q;
-            const searchStr = params.city?.trim();
-            
-            if (searchStr) {
-                q = query(collection(db, path), where('city', '>=', searchStr), where('city', '<=', searchStr + '\uf8ff'), orderBy('city'), orderBy('name'));
-            } else {
-                q = query(collection(db, path), orderBy('name'));
-            }
-            
-            if (params.category && params.category !== 'all') {
-                q = query(q, where('category', '==', params.category));
-            }
+    return paged('businesses', params.page ?? 0, params.limit ?? 20, (row) => ({
+      id: row.id, name: row.name, nameAr: row.name_ar, nameKu: row.name_ku, imageUrl: row.image_url, coverImage: row.cover_image,
+      isPremium: row.is_premium, isFeatured: row.is_featured, category: row.category, subcategory: row.subcategory,
+      rating: Number(row.rating ?? 0), distance: row.distance, status: row.status, isVerified: row.is_verified ?? false,
+      reviewCount: row.review_count ?? 0, governorate: row.governorate, city: row.city, address: row.address, phone: row.phone,
+      whatsapp: row.whatsapp, website: row.website, description: row.description,
+    }), { filters, order: { column: 'name', ascending: true } });
+  },
 
-            if (params.governorate && params.governorate !== 'all') {
-                q = query(q, where('governorate', '==', params.governorate));
-            }
+  async getPosts(params: { page?: number; limit?: number; governorate?: string } = {}): Promise<PaginatedResult<Post>> {
+    const filters: string[] = [];
+    if (params.governorate && params.governorate !== 'all') filters.push(`governorate=eq.${encodeURIComponent(params.governorate)}`);
+    return paged('posts', params.page ?? 0, params.limit ?? 8, (row) => ({
+      id: row.id, businessId: row.business_id, businessName: row.business_name, businessAvatar: row.business_avatar,
+      caption: row.caption, imageUrl: row.image_url, createdAt: toDate(row.created_at), likes: row.likes ?? 0, isVerified: row.is_verified ?? false,
+    }), { filters, order: { column: 'created_at', ascending: false } });
+  },
 
-            if (params.featuredOnly) {
-                q = query(q, where('isFeatured', '==', true));
-            }
-            
-            if (params.lastDoc) {
-                q = query(q, startAfter(params.lastDoc));
-            }
+  async getDeals(params: { page?: number; limit?: number; governorate?: string } = {}): Promise<PaginatedResult<Deal>> {
+    const filters: string[] = [];
+    if (params.governorate && params.governorate !== 'all') filters.push(`governorate=eq.${encodeURIComponent(params.governorate)}`);
+    return paged('deals', params.page ?? 0, params.limit ?? 9, (row) => ({
+      id: row.id, discount: row.discount ?? 0, businessLogo: row.business_logo, title: row.title, titleKey: row.title_key,
+      description: row.description, descriptionKey: row.description_key, expiresIn: row.expires_in, expiresInKey: row.expires_in_key,
+      claimed: row.claimed ?? 0, total: row.total ?? 1, createdAt: row.created_at,
+    }), { filters, order: { column: 'created_at', ascending: false } });
+  },
 
-            const pageSize = params.limit || 20;
-            q = query(q, limit(pageSize));
-            
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => {
-                const d = doc.data() as any;
-                return { 
-                    id: doc.id, 
-                    ...d,
-                    isVerified: d.isVerified ?? d.verified ?? false
-                } as Business;
-            });
-            const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+  async getStories(params: { page?: number; limit?: number; governorate?: string } = {}): Promise<PaginatedResult<Story>> {
+    const filters: string[] = [];
+    if (params.governorate && params.governorate !== 'all') filters.push(`governorate=eq.${encodeURIComponent(params.governorate)}`);
+    return paged('stories', params.page ?? 0, params.limit ?? 12, (row) => ({
+      id: row.id, avatar: row.avatar, name: row.name, viewed: row.viewed, verified: row.verified, thumbnail: row.thumbnail,
+      userName: row.user_name, type: row.type, aiVerified: row.ai_verified, isLive: row.is_live, media: Array.isArray(row.media) ? row.media : [],
+      timeAgo: row.time_ago ?? 'Now',
+    }), { filters, order: { column: 'created_at', ascending: false } });
+  },
 
-            return {
-                data,
-                lastDoc: lastVisible,
-                hasMore: data.length === pageSize
-            };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return { data: mockData.businesses.slice(0, params.limit || 20), hasMore: false };
-        }
-    },
+  async getEvents(params: { category?: string; governorate?: string; page?: number; limit?: number } = {}): Promise<PaginatedResult<Event>> {
+    const filters: string[] = [];
+    if (params.category && params.category !== 'all') filters.push(`category=eq.${encodeURIComponent(params.category)}`);
+    if (params.governorate && params.governorate !== 'all') filters.push(`governorate=eq.${encodeURIComponent(params.governorate)}`);
+    return paged('events', params.page ?? 0, params.limit ?? 9, (row) => ({
+      id: row.id, image: row.image, title: row.title, titleKey: row.title_key, aiRecommended: row.ai_recommended,
+      date: toDate(row.date), venue: row.venue, venueKey: row.venue_key, location: row.location, attendees: row.attendees ?? 0,
+      price: row.price ?? 0, category: row.category, governorate: row.governorate, accessibility: row.accessibility,
+    }), { filters, order: { column: 'date', ascending: true } });
+  },
 
-    subscribeToPosts(callback: (posts: Post[]) => void) {
-        if (!isConfigValid) {
-            callback(mockData.posts || []);
-            return () => {};
-        }
+  async createPost(postData: Partial<Post> & { governorate?: string }) {
+    const rows = await supabase.db.insert('posts', [{
+      business_id: postData.businessId, business_name: postData.businessName, business_avatar: postData.businessAvatar,
+      caption: postData.caption, image_url: postData.imageUrl, likes: postData.likes ?? 0, is_verified: postData.isVerified ?? false,
+      governorate: postData.governorate,
+    }]);
+    return { success: true, id: rows[0]?.id };
+  },
 
-        const path = 'posts';
-        const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(50));
-        
-        return onSnapshot(q, (snapshot) => {
-            const postsMap = new Map<string, Post>();
-            
-            snapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const post = { 
-                    id: doc.id, 
-                    ...data,
-                    createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
-                    isVerified: data.isVerified ?? data.verified ?? false
-                } as Post;
-                postsMap.set(post.id, post);
-            });
-            
-            callback(Array.from(postsMap.values()));
-        }, (error) => {
-            handleFirestoreError(error, OperationType.GET, path);
-            callback(mockData.posts || []);
-        });
-    },
+  async getOrCreateProfile(authUser: SupabaseAuthUser, requestedRole: 'user' | 'owner' = 'user'): Promise<User> {
+    const existing = await supabase.db.select('users', { filters: [`id=eq.${authUser.id}`], single: true });
+    const adminEmail = 'safaribosafar@gmail.com';
+    const isAdminEmail = authUser.email === adminEmail;
 
-    async getDeals() {
-        if (!isConfigValid) return mockData.deals || [];
-        const path = 'deals';
-        try {
-            const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(10));
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return mockData.deals || [];
-        }
-    },
-
-    async getStories() {
-        if (!isConfigValid) return mockData.stories || [];
-        const path = 'stories';
-        try {
-            const q = query(collection(db, path), orderBy('createdAt', 'desc'), limit(20));
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return mockData.stories || [];
-        }
-    },
-
-    async getEvents(params: { category?: string; governorate?: string } = {}) {
-        if (!isConfigValid) {
-            let filtered = [...mockData.events];
-            if (params.category && params.category !== 'all') filtered = filtered.filter(e => e.category === params.category);
-            if (params.governorate && params.governorate !== 'all') filtered = filtered.filter(e => e.governorate === params.governorate);
-            return filtered;
-        }
-
-        const path = 'events';
-        try {
-            let q = query(collection(db, path), orderBy('date', 'asc'));
-            if (params.category && params.category !== 'all') {
-                q = query(q, where('category', '==', params.category));
-            }
-            if (params.governorate && params.governorate !== 'all') {
-                q = query(q, where('governorate', '==', params.governorate));
-            }
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    ...data,
-                    date: data.date ? (data.date as Timestamp).toDate() : new Date()
-                } as any;
-            });
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return mockData.events || [];
-        }
-    },
-
-    async createPost(postData: Partial<Post>) {
-        if (!isConfigValid) return { success: true, id: 'mock_post_id' };
-        const path = 'posts';
-        try {
-            const docRef = await addDoc(collection(db, path), {
-                ...postData,
-                createdAt: serverTimestamp(),
-                likes: 0
-            });
-            return { success: true, id: docRef.id };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { success: false };
-        }
-    },
-
-    async getOrCreateProfile(firebaseUser: any, requestedRole: 'user' | 'owner' = 'user') {
-        if (!firebaseUser) return null;
-        if (!isConfigValid) return { ...mockData.mockUser, id: firebaseUser.uid, email: firebaseUser.email || '' };
-        
-        const path = `users/${firebaseUser.uid}`;
-        try {
-            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-            
-            const adminEmail = 'safaribosafar@gmail.com';
-            const isAdminEmail = firebaseUser.email === adminEmail && firebaseUser.emailVerified;
-            
-            if (userDoc.exists()) {
-                const userData = userDoc.data() as User;
-                if (isAdminEmail && userData.role !== 'admin') {
-                    const updatedUser = { ...userData, role: 'admin' as any };
-                    await setDoc(doc(db, 'users', firebaseUser.uid), updatedUser, { merge: true });
-                    return updatedUser;
-                }
-                return userData;
-            } else {
-                const newUser: User = {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-                    email: firebaseUser.email || '',
-                    avatar: firebaseUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firebaseUser.uid}`,
-                    role: isAdminEmail ? 'admin' as any : requestedRole,
-                    businessId: requestedRole === 'owner' ? `b_${firebaseUser.uid}` : undefined
-                };
-                await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-                return newUser;
-            }
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { ...mockData.mockUser, id: firebaseUser.uid, email: firebaseUser.email || '' };
-        }
-    },
-
-    async upsertPostcard(postcard: BusinessPostcard) {
-        if (!isConfigValid) return { success: true, id: 'mock_postcard_id' };
-        const path = 'business_postcards';
-        try {
-            const docId = `${postcard.title}_${postcard.city}`.replace(/\s+/g, '_').toLowerCase();
-            const docRef = doc(db, path, docId);
-            
-            await setDoc(docRef, {
-                ...postcard,
-                updatedAt: serverTimestamp()
-            }, { merge: true });
-            
-            return { success: true, id: docId };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { success: false };
-        }
-    },
-
-    async getPostcards(governorate?: string) {
-        if (!isConfigValid) return [];
-        const path = 'business_postcards';
-        try {
-            let q = query(collection(db, path), orderBy('updatedAt', 'desc'));
-            if (governorate && governorate !== 'all') {
-                q = query(q, where('governorate', '==', governorate));
-            }
-            const snapshot = await getDocs(q);
-            return snapshot.docs.map(doc => {
-                const data = doc.data();
-                return { 
-                    id: doc.id, 
-                    ...data,
-                    isVerified: data.isVerified ?? data.verified ?? false,
-                    updatedAt: data.updatedAt ? (data.updatedAt as Timestamp).toDate() : undefined
-                } as unknown as BusinessPostcard;
-            });
-        } catch (error) {
-            handleFirestoreError(error, OperationType.GET, path);
-            return [];
-        }
-    },
-
-    async updateProfile(userId: string, data: Partial<User>) {
-        if (!isConfigValid) return { success: true };
-        const path = `users/${userId}`;
-        try {
-            await setDoc(doc(db, 'users', userId), {
-                ...data,
-                updatedAt: serverTimestamp()
-            }, { merge: true });
-            return { success: true };
-        } catch (error) {
-            handleFirestoreError(error, OperationType.WRITE, path);
-            return { success: false };
-        }
+    if (existing) {
+      if (isAdminEmail && existing.role !== 'admin') await supabase.db.update('users', { role: 'admin' }, [`id=eq.${authUser.id}`]);
+      return { id: existing.id, name: existing.name, email: existing.email, avatar: existing.avatar, role: isAdminEmail ? 'admin' : existing.role, businessId: existing.business_id };
     }
+
+    const newUser = {
+      id: authUser.id,
+      name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+      email: authUser.email || '',
+      avatar: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.id}`,
+      role: isAdminEmail ? 'admin' : requestedRole,
+      business_id: requestedRole === 'owner' ? `b_${authUser.id}` : null,
+    };
+    await supabase.db.insert('users', [newUser]);
+    return { id: newUser.id, name: newUser.name, email: newUser.email, avatar: newUser.avatar, role: newUser.role as User['role'], businessId: newUser.business_id ?? undefined };
+  },
+
+  async upsertPostcard(postcard: BusinessPostcard) {
+    const rows = await supabase.db.insert('business_postcards', [{ ...postcard, updated_at: new Date().toISOString() }], { upsert: true });
+    return { success: true, id: rows[0]?.id };
+  },
+
+  async getPostcards(governorate?: string): Promise<BusinessPostcard[]> {
+    const filters: string[] = [];
+    if (governorate && governorate !== 'all') filters.push(`governorate=eq.${encodeURIComponent(governorate)}`);
+    return supabase.db.select('business_postcards', { filters, order: { column: 'updated_at', ascending: false } });
+  },
+
+  async updateProfile(userId: string, data: Partial<User>) {
+    await supabase.db.update('users', { name: data.name, email: data.email, avatar: data.avatar, updated_at: new Date().toISOString() }, [`id=eq.${userId}`]);
+    return { success: true };
+  },
 };

@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# BREAKFAST (Iraq Compass)
 
-# Run and deploy your AI Studio app
+Production-focused Iraq Compass web app built with React + Vite and a Supabase-only backend.
 
-This contains everything you need to run your app locally.
+## Features
+- Supabase auth (Google OAuth + email/password)
+- Supabase data for businesses, posts, stories, deals, events, postcards, users
+- Governorate + language aware UX
+- Listing and feed pagination with load-more
 
-View your app in AI Studio: https://ai.studio/apps/422ad25e-51be-460b-b909-965e6d429179
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
+## Local development
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+2. Create `.env` from `.env.example` and fill values.
+3. Start dev server:
+   ```bash
+   npm run dev
+   ```
+
+## Required environment variables
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `GEMINI_API_KEY` (only for AI helper features like Data Architect / City Guide)
+
+## Build & checks
+```bash
+npm run lint
+npm run build
+```
+
+## Deployment
+This is a static Vite app. Deploy `dist/` to any static host (Vercel, Netlify, Cloudflare Pages) and configure the same environment variables.
