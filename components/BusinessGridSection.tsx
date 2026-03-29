@@ -8,12 +8,14 @@ interface BusinessGridSectionProps {
     posts: Post[];
     isLoading: boolean;
     isLoggedIn: boolean;
+    selectedGovernorate: string;
 }
 
 export const BusinessGridSection: React.FC<BusinessGridSectionProps> = ({ 
     posts, 
     isLoading, 
-    isLoggedIn 
+    isLoggedIn,
+    selectedGovernorate
 }) => {
     const { t } = useTranslations();
 
@@ -25,9 +27,12 @@ export const BusinessGridSection: React.FC<BusinessGridSectionProps> = ({
                 viewport={{ once: true }}
             >
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-3xl font-bold text-white tracking-tight">
-                        {t('social.ecosystemTitle') || 'Social Ecosystem'}
-                    </h2>
+                    <div>
+                        <h2 className="text-3xl font-bold text-white tracking-tight">
+                            {t('social.ecosystemTitle') || 'Recent posts'}
+                        </h2>
+                        <p className="text-white/60 mt-1">{selectedGovernorate === 'all' ? 'Latest updates across Iraq' : `Updates in ${selectedGovernorate}`}</p>
+                    </div>
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
@@ -39,7 +44,8 @@ export const BusinessGridSection: React.FC<BusinessGridSectionProps> = ({
                 <SocialFeed 
                     posts={posts} 
                     isLoading={isLoading} 
-                    isLoggedIn={isLoggedIn} 
+                    isLoggedIn={isLoggedIn}
+                    selectedGovernorate={selectedGovernorate}
                 />
             </motion.div>
         </section>

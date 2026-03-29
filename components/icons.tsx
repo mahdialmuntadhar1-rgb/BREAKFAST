@@ -53,7 +53,11 @@ import {
   ChevronRight,
   ChevronLeft,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Mail,
+  Lock,
+  Phone,
+  Building2
 } from 'lucide-react';
 
 export {
@@ -111,6 +115,10 @@ export {
   ChevronRight,
   ChevronLeft,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Mail,
+  Lock,
+  Phone,
+  Building2
 };
 
