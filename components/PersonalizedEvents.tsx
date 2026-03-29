@@ -10,6 +10,7 @@ export const PersonalizedEvents: React.FC = () => {
   const [activeTab, setActiveTab] = useState('forYou');
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(6);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -49,9 +50,10 @@ export const PersonalizedEvents: React.FC = () => {
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-white mb-8 text-center">
+        <h2 className="text-3xl font-bold text-white mb-2 text-center">
           {t('events.personalizedTitle')}
         </h2>
+        <p className="text-center text-white/60 mb-8">Events in Sulaymaniyah</p>
         <div className="flex justify-center gap-4 mb-12 overflow-x-auto scrollbar-hide pb-4">
           {['forYou', 'trending', 'nearYou', 'friendsGoing'].map((tab) => (
             <button
@@ -80,7 +82,7 @@ export const PersonalizedEvents: React.FC = () => {
                 </p>
               </div>
             ) : (
-              events.map((event, index) => (
+              events.slice(0, visibleCount).map((event, index) => (
                 <motion.div
                     key={event.id}
                     initial={{ opacity: 0, y: 30 }}
@@ -149,6 +151,15 @@ export const PersonalizedEvents: React.FC = () => {
                     </GlassCard>
                 </motion.div>
               ))
+            )}
+          </div>
+        )}
+        {!isLoading && events.length > 0 && (
+          <div className="mt-10"> 
+            {visibleCount < events.length ? (
+              <button onClick={() => setVisibleCount((prev) => prev + 3)} className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:-translate-y-0.5 transition-all cursor-pointer">Load more events</button>
+            ) : (
+              <p className="text-center text-white/50 text-sm py-4 border border-white/10 rounded-2xl bg-white/5">You reached the end.</p>
             )}
           </div>
         )}

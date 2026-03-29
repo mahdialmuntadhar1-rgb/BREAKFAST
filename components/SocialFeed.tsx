@@ -17,6 +17,7 @@ interface SocialFeedProps {
 export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLoggedIn, onLike, onComment, onShare }) => {
     const { t, lang } = useTranslations();
     const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+    const [visibleCount, setVisibleCount] = useState(4);
 
     const handleLike = (postId: string) => {
         const newLikedPosts = new Set(likedPosts);
@@ -50,6 +51,8 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
         );
     }
 
+    const visiblePosts = posts.slice(0, visibleCount);
+
     return (
         <div className="space-y-6 max-w-2xl mx-auto">
             <AnimatePresence mode="popLayout">
@@ -68,7 +71,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                         </p>
                     </motion.div>
                 ) : (
-                    posts.map((post, index) => (
+                    visiblePosts.map((post, index) => (
                         <motion.div
                             key={post.id}
                             initial={{ opacity: 0, y: 30 }}
@@ -176,6 +179,20 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                     ))
                 )}
             </AnimatePresence>
+            {posts.length > 0 && (
+                <div className="pt-2">
+                    {visibleCount < posts.length ? (
+                        <button
+                            onClick={() => setVisibleCount((prev) => prev + 4)}
+                            className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:-translate-y-0.5 transition-all cursor-pointer"
+                        >
+                            Load more posts
+                        </button>
+                    ) : (
+                        <p className="text-center text-white/50 text-sm py-4 border border-white/10 rounded-2xl bg-white/5">You reached the end.</p>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

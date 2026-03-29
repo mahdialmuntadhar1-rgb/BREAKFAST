@@ -167,10 +167,14 @@ const MainContent: React.FC = () => {
   }, [highContrast]);
 
   const handleLogin = (role: 'user' | 'owner') => {
-    // Auth is handled in AuthModal via signInWithPopup, 
-    // which triggers onAuthStateChanged above.
-    // We store the role in sessionStorage to be picked up by the listener.
-    sessionStorage.setItem('pending_role', role);
+    setCurrentUser({
+      id: 'local-user',
+      name: role === 'owner' ? 'Business Owner' : 'Explorer',
+      email: 'new@iraqcompass.app',
+      avatar: '',
+      role,
+    });
+    setIsLoggedIn(true);
     setShowAuthModal(false);
   };
 

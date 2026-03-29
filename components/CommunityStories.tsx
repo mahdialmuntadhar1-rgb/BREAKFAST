@@ -10,6 +10,7 @@ export const CommunityStories: React.FC = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(8);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -65,10 +66,10 @@ export const CommunityStories: React.FC = () => {
               <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
                 <Plus className="w-10 h-10 text-white" />
               </div>
-              <p className="text-white text-xs font-black uppercase tracking-widest">{t('stories.noStories') || "No stories shared yet."}</p>
+              <p className="text-white text-xs font-black uppercase tracking-widest">No stories yet in your city.</p>
             </div>
           ) : (
-            stories.map((story, index) => (
+            stories.slice(0, visibleCount).map((story, index) => (
             <motion.div 
                 key={story.id} 
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -134,6 +135,18 @@ export const CommunityStories: React.FC = () => {
             </div>
           </motion.div>
         </div>
+        {stories.length > 0 && (
+          <div className="col-span-full mt-4">
+            {visibleCount < stories.length ? (
+              <button onClick={() => setVisibleCount((prev) => prev + 6)} className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-secondary text-white font-bold hover:-translate-y-0.5 transition-all cursor-pointer">
+                Load more stories
+              </button>
+            ) : (
+              <p className="text-center text-white/50 text-sm py-4 border border-white/10 rounded-2xl bg-white/5">You reached the end.</p>
+            )}
+          </div>
+        )}
+
       </div>
       {activeStory && <StoryViewer story={activeStory} onClose={() => setActiveStory(null)} />}
     </section>
