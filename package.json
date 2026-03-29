@@ -1,7 +1,7 @@
 {
-  "name": "copy-of-iraq-compassamazingfinal2",
+  "name": "breakfast-iraq-compass",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@google/genai": "latest",
-    "firebase": "^12.11.0",
     "lucide-react": "^1.7.0",
     "motion": "^12.38.0",
     "react": "^19.2.0",

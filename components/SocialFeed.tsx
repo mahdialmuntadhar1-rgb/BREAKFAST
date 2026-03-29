@@ -12,9 +12,10 @@ interface SocialFeedProps {
     onLike?: (postId: string) => void;
     onComment?: (postId: string) => void;
     onShare?: (postId: string) => void;
+    onRequireAuth?: () => void;
 }
 
-export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLoggedIn, onLike, onComment, onShare }) => {
+export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLoggedIn, onLike, onComment, onShare, onRequireAuth }) => {
     const { t, lang } = useTranslations();
     const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
@@ -130,7 +131,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                                 <div className="p-4 flex items-center justify-between bg-white/[0.02]">
                                     <div className="flex items-center gap-8">
                                         <button 
-                                            onClick={() => isLoggedIn && handleLike(post.id)}
+                                            onClick={() => (isLoggedIn ? handleLike(post.id) : onRequireAuth?.())}
                                             disabled={!isLoggedIn}
                                             className={`flex items-center gap-2.5 transition-all transform active:scale-90 ${!isLoggedIn ? 'opacity-30 cursor-not-allowed' : likedPosts.has(post.id) ? 'text-accent' : 'text-white/50 hover:text-accent'}`}
                                             title={!isLoggedIn ? t('social.loginToLike') : ""}
@@ -139,7 +140,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ posts, isLoading, isLogg
                                             <span className="text-base font-bold">{post.likes + (likedPosts.has(post.id) ? 1 : 0)}</span>
                                         </button>
                                         <button 
-                                            onClick={() => isLoggedIn && onComment?.(post.id)}
+                                            onClick={() => (isLoggedIn ? onComment?.(post.id) : onRequireAuth?.())}
                                             disabled={!isLoggedIn}
                                             className={`flex items-center gap-2.5 transition-all transform active:scale-90 ${!isLoggedIn ? 'opacity-30 cursor-not-allowed' : 'text-white/50 hover:text-primary'}`}
                                             title={!isLoggedIn ? t('social.loginToComment') : ""}

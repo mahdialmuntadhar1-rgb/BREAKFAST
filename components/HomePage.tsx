@@ -11,7 +11,6 @@ import { CommunityStories } from './CommunityStories';
 import { CityGuide } from './CityGuide';
 import { InclusiveFeatures } from './InclusiveFeatures';
 import { FooterSection } from './FooterSection';
-import { useTranslations } from '../hooks/useTranslations';
 import type { Post, Category } from '../types';
 
 interface HomePageProps {
@@ -26,63 +25,38 @@ interface HomePageProps {
   onGovernorateChange: (gov: string) => void;
   highContrast: boolean;
   setHighContrast: (val: boolean) => void;
+  onRequireAuth: () => void;
+  onHeroExplore: () => void;
+  onHeroLearnMore: () => void;
+  onLoadMorePosts: () => void;
+  postsHasMore: boolean;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({
-  posts,
-  isSocialLoading,
-  isLoggedIn,
-  onCategoryClick,
-  currentPage,
-  setCurrentPage,
-  onSearch,
-  selectedGovernorate,
-  onGovernorateChange,
-  highContrast,
-  setHighContrast,
-}) => {
-  const { t } = useTranslations();
+export const HomePage: React.FC<HomePageProps> = ({ posts, isSocialLoading, isLoggedIn, onCategoryClick, currentPage, setCurrentPage, onSearch, selectedGovernorate, onGovernorateChange, highContrast, setHighContrast, onRequireAuth, onHeroExplore, onHeroLearnMore, onLoadMorePosts, postsHasMore }) => (
+  <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
+    <HeroSection onExplore={onHeroExplore} onLearnMore={onHeroLearnMore} />
+    <StoriesRing />
 
-  return (
-    <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
-      <HeroSection />
-      <StoriesRing />
-      
-      <CategoriesSection 
-        onCategoryClick={onCategoryClick} 
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-      />
+    <CategoriesSection onCategoryClick={onCategoryClick} currentPage={currentPage} setCurrentPage={setCurrentPage} />
 
-      <div className="container mx-auto px-4 py-24 relative">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-              <BusinessGridSection 
-                posts={posts} 
-                isLoading={isSocialLoading} 
-                isLoggedIn={isLoggedIn} 
-              />
-              
-              <SearchSection 
-                onSearch={onSearch} 
-                selectedGovernorate={selectedGovernorate}
-                onGovernorateChange={onGovernorateChange}
-              />
-          </div>
+    <div className="container mx-auto px-4 py-24 relative">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+        <BusinessGridSection posts={posts} isLoading={isSocialLoading} isLoggedIn={isLoggedIn} onRequireAuth={onRequireAuth} onLoadMore={onLoadMorePosts} hasMore={postsHasMore} />
+        <SearchSection onSearch={onSearch} selectedGovernorate={selectedGovernorate} onGovernorateChange={onGovernorateChange} />
       </div>
-
-      <FeaturedSection />
-      
-      <div className="space-y-32 py-24">
-        <PersonalizedEvents />
-        <DealsMarketplace />
-        <CommunityStories />
-        <CityGuide />
-      </div>
-
-      <InclusiveFeatures highContrast={highContrast} setHighContrast={setHighContrast} />
-      
-      <FooterSection />
     </div>
-  );
-};
 
+    <FeaturedSection />
+
+    <div className="space-y-32 py-24">
+      <PersonalizedEvents />
+      <DealsMarketplace onRequireAuth={onRequireAuth} />
+      <CommunityStories />
+      <CityGuide />
+    </div>
+
+    <InclusiveFeatures highContrast={highContrast} setHighContrast={setHighContrast} />
+
+    <FooterSection />
+  </div>
+);
