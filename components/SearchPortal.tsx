@@ -97,31 +97,43 @@ export const SearchPortal: React.FC<SearchPortalProps> = ({ onSearch }) => {
 
     return (
          <div className="container mx-auto px-4 py-6">
-            <div className="max-w-3xl mx-auto w-full" onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}>
+            <div className="max-w-4xl mx-auto w-full" onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}>
                 <div className="relative group">
-                    <div className="backdrop-blur-xl bg-white/10 border-2 border-white/20 rounded-full ps-4 pe-2 py-2 md:px-6 md:py-4 flex items-center gap-2 md:gap-4 transition-all duration-300 hover:bg-white/15 hover:border-primary/50 focus-within:border-primary focus-within:shadow-[0_0_30px_rgba(108,43,217,0.5)]">
-                        <Search className="w-5 h-5 md:w-6 md:h-6 text-secondary" />
+                    <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative backdrop-blur-2xl bg-white/5 border-2 border-white/10 rounded-full ps-5 pe-2 py-2 md:px-8 md:py-5 flex items-center gap-3 md:gap-6 transition-all duration-500 hover:bg-white/10 hover:border-white/20 focus-within:border-primary/50 focus-within:bg-white/10 focus-within:shadow-[0_0_50px_rgba(108,43,217,0.3)]">
+                        <Search className="w-6 h-6 md:w-7 md:h-7 text-secondary drop-shadow-[0_0_10px_rgba(0,217,255,0.5)]" />
                         <input
                             type="text"
-                            placeholder={t('hero.searchPlaceholder')}
-                            className="flex-1 bg-transparent outline-none text-white placeholder:text-white/50 text-sm md:text-base"
+                            placeholder={t('hero.searchPlaceholder') || 'Search for restaurants, events, or places...'}
+                            className="flex-1 bg-transparent outline-none text-white placeholder:text-white/30 text-base md:text-xl font-light tracking-wide"
                             onFocus={() => setShowSuggestions(true)}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={handleKeyDown}
                         />
-                        <button 
-                            className="relative w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center hover:scale-110 transition-transform group-hover:shadow-[0_0_20px_rgba(0,217,255,0.5)] disabled:opacity-50 disabled:cursor-not-allowed" 
-                            onClick={handleMicClick}
-                            disabled={!recognitionRef.current}
-                        >
-                            <Mic className="w-5 h-5 text-white" />
-                            {isListening && <WaveformAnimation />}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                className="relative w-10 h-10 md:w-14 md:h-14 flex-shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:scale-110 transition-all duration-300 disabled:opacity-50" 
+                                onClick={handleMicClick}
+                                disabled={!recognitionRef.current}
+                                title="Voice Search"
+                            >
+                                <Mic className={`w-5 h-5 md:w-6 md:h-6 ${isListening ? 'text-accent' : 'text-white/70'}`} />
+                                {isListening && <WaveformAnimation />}
+                            </button>
+                            <button 
+                                className="hidden md:flex w-14 h-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-white hover:shadow-glow-secondary hover:scale-105 active:scale-95 transition-all duration-300"
+                                onClick={() => handleSearchSubmit(inputValue)}
+                            >
+                                <Search className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
                     {showSuggestions && inputValue && <SearchSuggestions />}
                 </div>
-                <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                
+                <div className="flex flex-wrap gap-3 mt-8 justify-center items-center">
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/30 mr-2">{t('hero.trending') || 'Trending'}:</span>
                     {[
                         t('hero.filters.eventsToday'), 
                         t('hero.filters.restaurants'), 
@@ -131,7 +143,7 @@ export const SearchPortal: React.FC<SearchPortalProps> = ({ onSearch }) => {
                         <button 
                             key={filter} 
                             onClick={() => handleSearchSubmit(filter)}
-                            className="px-3 py-1.5 md:px-4 md:py-2 rounded-full backdrop-blur-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-primary/50 transition-all duration-200 text-white/80 hover:text-white text-xs md:text-sm"
+                            className="px-5 py-2 rounded-full backdrop-blur-md bg-white/5 border border-white/10 hover:bg-primary/20 hover:border-primary/40 hover:text-white transition-all duration-300 text-white/60 text-xs md:text-sm font-medium hover:shadow-glow-primary/20"
                         >
                             {filter}
                         </button>

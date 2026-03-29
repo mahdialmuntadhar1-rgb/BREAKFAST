@@ -117,53 +117,67 @@ export const FeaturedBusinesses: React.FC = () => {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="flex-shrink-0 w-85 snap-center"
                 >
-                  <GlassCard className="p-0 overflow-hidden group border-white/10 hover:border-primary/30 transition-all duration-500 hover:shadow-glow-primary/20">
-                    <div className="relative h-56 overflow-hidden">
+                  <GlassCard className="p-0 overflow-hidden group border-white/10 hover:border-primary/30 transition-all duration-500 hover:shadow-glow-primary/20 bg-black/40 backdrop-blur-2xl">
+                    <div className="relative h-64 overflow-hidden">
                       <img
                         src={displayImage}
                         alt={displayName}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-dark-bg/90 via-dark-bg/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
                       
-                      <div className="absolute top-4 left-4 flex gap-2">
+                      <div className="absolute top-4 left-4 flex flex-col gap-2">
                         {isPremium && (
-                          <div className="px-3 py-1.5 rounded-full bg-accent/90 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
+                          <motion.div 
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            className="px-3 py-1.5 rounded-lg bg-accent/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-2xl border border-white/20"
+                          >
                             <Crown className="w-3.5 h-3.5" />
-                            {t('featured.premium')}
-                          </div>
+                            {t('featured.premium') || 'Premium'}
+                          </motion.div>
                         )}
+                        <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-white/10">
+                          <Star className="w-3.5 h-3.5 text-accent fill-accent" />
+                          {business.rating || '4.9'}
+                        </div>
                       </div>
 
-                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
-                          <Star className="w-4 h-4 text-accent fill-accent" />
-                          <span className="text-white font-bold text-sm">{business.rating}</span>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter bg-primary/20 text-primary border border-primary/30 backdrop-blur-md">
+                                {t(`categories.${business.category}`) || business.category}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter border backdrop-blur-md ${business.status?.toLowerCase() === 'open' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
+                                {business.status ? t(`featured.${business.status.toLowerCase()}`) : t('featured.open')}
+                            </span>
                         </div>
-                        <div className={`px-3 py-1 rounded-full backdrop-blur-md text-xs font-bold border border-white/10 ${business.status?.toLowerCase() === 'open' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                          {business.status ? t(`featured.${business.status.toLowerCase()}`) : t('featured.open')}
-                        </div>
+                        <h3 className="text-white font-black text-2xl tracking-tight leading-none group-hover:text-secondary transition-colors duration-300">
+                            {displayName}
+                        </h3>
                       </div>
                     </div>
 
-                    <div className="p-6">
-                      <div className="mb-6">
-                        <h3 className="text-white font-bold text-2xl mb-2 group-hover:text-primary transition-colors">{displayName}</h3>
-                        <div className="flex items-center gap-2 text-white/40 text-sm">
+                    <div className="p-6 space-y-6">
+                      <div className="flex items-center justify-between text-white/50 text-xs font-bold uppercase tracking-widest">
+                        <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-primary" />
                           <span>{business.governorate || 'Baghdad'}</span>
-                          <span className="w-1 h-1 rounded-full bg-white/20" />
-                          <span>{t(`categories.${business.category}`)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-secondary" />
+                          <span>{business.hours || '09:00 - 22:00'}</span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <button className="px-5 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-bold text-sm hover:shadow-glow-primary transition-all duration-300 transform active:scale-95">
-                          {t('actions.book')}
+                      <div className="grid grid-cols-2 gap-3">
+                        <button className="relative overflow-hidden group/btn px-5 py-3.5 rounded-xl bg-white text-black font-black text-xs uppercase tracking-widest transition-all duration-300 hover:shadow-glow-white active:scale-95">
+                          <span className="relative z-10">{t('actions.book') || 'Book Now'}</span>
+                          <div className="absolute inset-0 bg-primary translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                         </button>
-                        <button className="px-5 py-3 rounded-xl backdrop-blur-xl bg-white/5 border border-white/10 text-white font-bold text-sm hover:bg-white/10 transition-all duration-300 transform active:scale-95">
-                          {t('actions.details')}
+                        <button className="px-5 py-3.5 rounded-xl backdrop-blur-xl bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all duration-300 active:scale-95">
+                          {t('actions.details') || 'Details'}
                         </button>
                       </div>
                     </div>

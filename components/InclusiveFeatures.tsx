@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { inclusiveFeaturesList, events, format } from '../constants';
 import type { Event } from '../types';
 import { useTranslations } from '../hooks/useTranslations';
-import { Check, X, MapPin, Clock } from './icons';
+import { Check, X, MapPin, Clock, ShieldCheck } from './icons';
 import { GlassCard } from './GlassCard';
+import { motion, AnimatePresence } from 'motion/react';
 
 // Parses a HEX color string (#RRGGBB) and returns an array of RGB values.
 function hexToRgb(hex: string): [number, number, number] | null {
@@ -200,88 +201,144 @@ export const InclusiveFeatures: React.FC<InclusiveFeaturesProps> = ({ highContra
     }, [activeFilters]);
 
     return (
-        <section className="py-16">
-        <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-white mb-4 text-center">
-            {t('inclusive.title')}
-            </h2>
-            <p className="text-white/70 text-center mb-12 max-w-2xl mx-auto">
-            {t('inclusive.subtitle')}
-            </p>
+    <section className="py-32 bg-black relative overflow-hidden">
+        {/* Background Glow */}
+        <div className="absolute top-0 right-0 w-full max-w-4xl h-96 bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-full max-w-4xl h-96 bg-secondary/5 blur-[150px] rounded-full pointer-events-none" />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {inclusiveFeaturesList.map((feature) => (
-                    <GlassCard
+        <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-4xl mx-auto text-center mb-20 space-y-4">
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-[10px] font-black uppercase tracking-[0.2em]"
+                >
+                    <ShieldCheck className="w-3 h-3" />
+                    {t('inclusive.badge') || 'Inclusive by Design'}
+                </motion.div>
+                <h2 className="text-5xl font-black text-white tracking-tighter">
+                    {t('inclusive.title') || 'Accessibility First'}
+                </h2>
+                <p className="text-white/40 max-w-2xl mx-auto font-medium">
+                    {t('inclusive.subtitle') || 'We believe discovery should be universal. Our platform is architected to be accessible, inclusive, and empowering for everyone.'}
+                </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
+            {inclusiveFeaturesList.map((feature, index) => (
+                    <motion.div
                         key={feature.key}
-                        className="p-6 hover:shadow-glow-primary text-center group"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        viewport={{ once: true }}
+                        className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-primary/30 hover:bg-white/10 transition-all duration-500 group relative overflow-hidden"
                     >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] rounded-full group-hover:bg-primary/10 transition-all duration-500" />
+                        
                         <div className={`
-                            w-16 h-16 mx-auto mb-4 rounded-2xl
-                            bg-gradient-to-br from-${feature.color}/70 to-${feature.color}/40
-                            flex items-center justify-center
-                            group-hover:scale-110 transition-transform
+                            w-16 h-16 mb-8 rounded-2xl
+                            bg-gradient-to-br from-primary to-secondary
+                            flex items-center justify-center shadow-lg shadow-primary/20
+                            group-hover:scale-110 group-hover:rotate-3 transition-all duration-500
                         `}>
                             <div className="text-white">
-                            {feature.icon}
+                                {feature.icon}
                             </div>
                         </div>
-                        <h3 className="text-white font-semibold mb-2">
+                        <h3 className="text-white font-black text-lg mb-3 tracking-tight">
                             {t(`inclusive.features.${feature.key}.title`)}
                         </h3>
-                        <p className="text-white/60 text-sm">
+                        <p className="text-white/40 text-sm font-medium leading-relaxed">
                             {t(`inclusive.features.${feature.key}.description`)}
                         </p>
-                    </GlassCard>
+                    </motion.div>
                 ))}
             </div>
 
-            <GlassCard className="p-8">
-                <h3 className="text-2xl font-bold text-white mb-6 text-center md:text-start rtl:md:text-right">
-                    {t('inclusive.findEvents')}
-                </h3>
-                <div className="flex flex-wrap gap-3 mb-8 justify-center md:justify-start">
-                    {[
-                    'wheelchairAccessible',
-                    'familyFriendly',
-                    'womenOnly',
-                    'sensoryFriendly',
-                    'signLanguage',
-                    'audioDescription'
-                    ].map((filter) => (
-                    <button
-                        key={filter}
-                        onClick={() => toggleFilter(filter)}
-                        className={`px-6 py-3 rounded-full backdrop-blur-xl border transition-all duration-200 ${activeFilters.includes(filter) ? 'bg-primary border-primary text-white shadow-glow-primary' : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'}`}
-                    >
-                        {t(`inclusive.filters.${filter}`)}
-                    </button>
-                    ))}
-                </div>
-                 {activeFilters.length > 0 && (
-                    <div className="border-t border-white/10 pt-6">
-                        <p className="text-white/80 mb-4">{filteredEvents.length} {t('inclusive.eventsFound')}</p>
-                        {filteredEvents.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {filteredEvents.map(event => (
-                                    <GlassCard key={event.id} className="p-4 text-start flex gap-3 items-center">
-                                        <img src={event.image} alt={event.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
-                                        <div>
-                                            <h4 className="font-semibold text-white mb-1 line-clamp-2">{event.title}</h4>
-                                            <div className="flex items-center gap-2 text-xs text-white/60"><MapPin className="w-3 h-3"/> {event.venue}</div>
-                                            <div className="flex items-center gap-2 text-xs text-white/60"><Clock className="w-3 h-3"/> {format(event.date, 'MMM')} {format(event.date, 'd')}</div>
-                                        </div>
-                                    </GlassCard>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center text-white/60 py-8">{t('inclusive.noEventsFound')}</p>
-                        )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="p-10 rounded-[3rem] bg-white/5 border border-white/10 backdrop-blur-2xl shadow-2xl space-y-10"
+                >
+                    <div className="space-y-2">
+                        <h3 className="text-2xl font-black text-white tracking-tight">
+                            {t('inclusive.findEvents') || 'Filter by Accessibility'}
+                        </h3>
+                        <p className="text-white/30 text-sm font-medium">Discover experiences tailored to your specific needs.</p>
                     </div>
-                )}
-            </GlassCard>
-            <ColorContrastChecker />
-            <VisualAccessibilitySettings highContrast={highContrast} setHighContrast={setHighContrast} />
+
+                    <div className="flex flex-wrap gap-3">
+                        {[
+                        'wheelchairAccessible',
+                        'familyFriendly',
+                        'womenOnly',
+                        'sensoryFriendly',
+                        'signLanguage',
+                        'audioDescription'
+                        ].map((filter) => (
+                        <button
+                            key={filter}
+                            onClick={() => toggleFilter(filter)}
+                            className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 border ${
+                                activeFilters.includes(filter) 
+                                ? 'bg-primary border-primary text-white shadow-glow-primary/20' 
+                                : 'bg-white/5 border-white/10 text-white/40 hover:border-white/20 hover:text-white'
+                            }`}
+                        >
+                            {t(`inclusive.filters.${filter}`)}
+                        </button>
+                        ))}
+                    </div>
+
+                    {activeFilters.length > 0 && (
+                        <div className="space-y-6 pt-6 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">{filteredEvents.length} {t('inclusive.eventsFound')}</p>
+                                <button onClick={() => setActiveFilters([])} className="text-primary text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors">Clear All</button>
+                            </div>
+                            {filteredEvents.length > 0 ? (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {filteredEvents.map(event => (
+                                        <motion.div 
+                                            key={event.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all duration-500 flex gap-4 items-center group"
+                                        >
+                                            <img src={event.image} alt={event.title} className="w-20 h-20 rounded-xl object-cover flex-shrink-0 group-hover:scale-105 transition-transform duration-500" />
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold text-white mb-2 line-clamp-1">{event.title}</h4>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30">
+                                                        <MapPin className="w-3 h-3 text-primary"/> {event.venue}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30">
+                                                        <Clock className="w-3 h-3 text-secondary"/> {format(event.date, 'MMM')} {format(event.date, 'd')}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-12 text-center space-y-4 opacity-20">
+                                    <X className="w-12 h-12 mx-auto text-white" />
+                                    <p className="text-white text-[10px] font-black uppercase tracking-widest">{t('inclusive.noEventsFound')}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </motion.div>
+
+                <div className="space-y-8">
+                    <ColorContrastChecker />
+                    <VisualAccessibilitySettings highContrast={highContrast} setHighContrast={setHighContrast} />
+                </div>
+            </div>
         </div>
-        </section>
+    </section>
     );
 };

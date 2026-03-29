@@ -8,16 +8,12 @@ interface BusinessGridSectionProps {
     posts: Post[];
     isLoading: boolean;
     isLoggedIn: boolean;
-    hasMorePosts?: boolean;
-    onLoadMorePosts?: () => void;
 }
 
 export const BusinessGridSection: React.FC<BusinessGridSectionProps> = ({ 
     posts, 
     isLoading, 
-    isLoggedIn,
-    hasMorePosts,
-    onLoadMorePosts
+    isLoggedIn 
 }) => {
     const { t } = useTranslations();
 
@@ -43,9 +39,7 @@ export const BusinessGridSection: React.FC<BusinessGridSectionProps> = ({
                 <SocialFeed 
                     posts={posts} 
                     isLoading={isLoading} 
-                    isLoggedIn={isLoggedIn}
-                    hasMore={hasMorePosts}
-                    onLoadMore={onLoadMorePosts}
+                    isLoggedIn={isLoggedIn} 
                 />
             </motion.div>
         </section>
