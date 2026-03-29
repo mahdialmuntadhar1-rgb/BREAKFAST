@@ -3,6 +3,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undef
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+if (isSupabaseConfigured) {
+  console.info('Supabase connected');
+} else {
+  console.info('Supabase fallback active');
+}
+
 export interface SupabaseQueryOptions {
   select?: string;
   filters?: string[];
