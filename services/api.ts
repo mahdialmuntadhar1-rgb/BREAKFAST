@@ -21,6 +21,7 @@ import { fetchSupabaseRows, isSupabaseConfigured } from './supabase';
 const isConfigValid = firebaseConfig.projectId && !firebaseConfig.projectId.startsWith('remixed-');
 
 export type BusinessesCursor = number;
+export type BusinessesDataSource = 'supabase' | 'mock';
 
 export enum OperationType {
   CREATE = 'create',
@@ -190,12 +191,13 @@ function mapEvent(row: any): Event {
 export const api = {
     async getBusinesses(params: { category?: string; city?: string; governorate?: string; lastDoc?: BusinessesCursor; limit?: number; featuredOnly?: boolean } = {}) {
         const fallback = () => {
+            console.info('Using mock data fallback');
             let filtered = [...mockData.businesses];
             if (params.featuredOnly) filtered = filtered.filter(b => b.isFeatured);
             if (params.category && params.category !== 'all') filtered = filtered.filter(b => b.category === params.category);
             if (params.governorate && params.governorate !== 'all') filtered = filtered.filter(b => b.governorate === params.governorate);
             if (params.city) filtered = filtered.filter(b => b.city?.toLowerCase().includes(params.city!.toLowerCase()));
-            return { data: filtered.slice(0, params.limit || 20), hasMore: false, lastDoc: undefined };
+            return { data: filtered.slice(0, params.limit || 20), hasMore: false, lastDoc: undefined, source: 'mock' as BusinessesDataSource };
         };
 
         if (!isSupabaseConfigured) return fallback();
@@ -217,13 +219,17 @@ export const api = {
                 offset,
                 filters
             });
+            console.log('getBusinesses rows returned:', rows.length);
+            console.log('getBusinesses first row:', rows[0] ?? null);
 
             if (!rows.length) return fallback();
             const data = rows.map(mapBusiness);
+            console.info('Using Supabase data');
             return {
                 data,
                 lastDoc: offset + data.length,
-                hasMore: data.length === pageSize
+                hasMore: data.length === pageSize,
+                source: 'supabase' as BusinessesDataSource
             };
         } catch (error) {
             handleSupabaseError(error, path);

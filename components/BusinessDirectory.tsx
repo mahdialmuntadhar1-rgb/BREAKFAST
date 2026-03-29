@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { categories, governorates } from '../constants';
-import { api, type BusinessesCursor } from '../services/api';
+import { api, type BusinessesCursor, type BusinessesDataSource } from '../services/api';
 import type { Business } from '../types';
 import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft, Loader2 } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
@@ -83,6 +83,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<BusinessesDataSource>('mock');
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -115,6 +116,7 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
         setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
         setLastDoc(result.lastDoc);
         setHasMore(result.hasMore);
+        setDataSource(result.source || 'mock');
     } catch (err) {
         console.error('Error fetching businesses:', err);
         setError(t('directory.errorLoading'));
@@ -159,6 +161,9 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                     <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
                         {getContextualTitle()}
                     </h2>
+                    <p className="text-xs text-white/60">
+                        Data Source: {dataSource === 'supabase' ? 'Supabase' : 'Mock'}
+                    </p>
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
