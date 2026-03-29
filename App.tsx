@@ -6,7 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
 import { HomePage } from './components/HomePage';
 import { api } from './services/api';
-import { supabase } from './services/supabase';
+import { supabase, supabaseConfigError } from './services/supabase';
 import type { User, Category, Subcategory, Post } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { AppSettingsProvider, useAppSettings } from './hooks/useAppSettings';
@@ -28,7 +28,7 @@ const getTranslation = (key: string) => {
 class ErrorBoundary extends (React.Component as any) {
   constructor(props: any) { super(props); this.state = { hasError: false, error: null }; }
   static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
-  componentDidCatch(error: any, errorInfo: any) { console.error('Uncaught error:', error, errorInfo); }
+  componentDidCatch(_error: any, _errorInfo: any) {}
   render() {
     if (this.state.hasError) {
       return <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4 text-center"><div className="max-w-md p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl"><h2 className="text-2xl font-bold text-white mb-4">{getTranslation('error.title')}</h2><p className="text-white/60 mb-6">{this.state.error?.message?.includes('{') ? getTranslation('error.database') : getTranslation('error.unexpected')}</p><button onClick={() => window.location.reload()} className="px-6 py-3 rounded-xl bg-primary text-white font-semibold hover:shadow-glow-primary transition-all">{getTranslation('error.refresh')}</button></div></div>;
@@ -55,6 +55,11 @@ const MainContent: React.FC = () => {
   const [highContrast, setHighContrast] = useState(() => typeof window !== 'undefined' && localStorage.getItem('iraq-compass-high-contrast') === 'true');
 
   useEffect(() => {
+    if (supabaseConfigError) {
+      setIsAuthReady(true);
+      return;
+    }
+
     let mounted = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
@@ -72,17 +77,30 @@ const MainContent: React.FC = () => {
           setCurrentUser(null);
           setIsLoggedIn(false);
         }
+      } catch {
+        if (mounted) {
+          setCurrentUser(null);
+          setIsLoggedIn(false);
+        }
       } finally { if (mounted) setIsAuthReady(true); }
     });
 
-    void supabase.auth.getSession().then(async ({ data }) => {
-      const authUser = data.session?.user;
-      if (authUser && mounted) {
-        const profile = await api.getOrCreateProfile(authUser, 'user');
-        setCurrentUser(profile);
-        setIsLoggedIn(Boolean(profile));
+    void supabase.auth.getSession().then(async ({ data }: any) => {
+      try {
+        const authUser = data.session?.user;
+        if (authUser && mounted) {
+          const profile = await api.getOrCreateProfile(authUser, 'user');
+          setCurrentUser(profile);
+          setIsLoggedIn(Boolean(profile));
+        }
+      } catch {
+        if (mounted) {
+          setCurrentUser(null);
+          setIsLoggedIn(false);
+        }
+      } finally {
+        if (mounted) setIsAuthReady(true);
       }
-      if (mounted) setIsAuthReady(true);
     });
 
     return () => { mounted = false; subscription.unsubscribe(); };
@@ -145,6 +163,17 @@ const MainContent: React.FC = () => {
   };
 
   if (!isAuthReady) return <div className="min-h-screen bg-dark-bg flex items-center justify-center"><div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
+
+  if (supabaseConfigError) {
+    return (
+      <div className="min-h-screen bg-dark-bg text-white flex items-center justify-center p-4">
+        <div className="max-w-md p-6 rounded-2xl bg-red-500/10 border border-red-500/30 text-center">
+          <h2 className="text-xl font-semibold mb-2">Configuration required</h2>
+          <p className="text-red-100/90 text-sm">{supabaseConfigError}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">

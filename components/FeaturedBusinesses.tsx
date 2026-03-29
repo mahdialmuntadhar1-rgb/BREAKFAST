@@ -10,6 +10,7 @@ export const FeaturedBusinesses: React.FC = () => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { t, lang } = useTranslations();
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,9 +23,9 @@ export const FeaturedBusinesses: React.FC = () => {
       setIsLoading(true);
       try {
         const result = await api.getBusinesses({ featuredOnly: true, limit: 10 });
-        if (isMounted) setBusinesses(result.data);
-      } catch (error) {
-        console.error('Error fetching featured businesses:', error);
+        if (isMounted) { setBusinesses(result.data); setError(null); }
+      } catch {
+        if (isMounted) setError(t('directory.errorLoading'));
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -88,6 +89,9 @@ export const FeaturedBusinesses: React.FC = () => {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200 text-center">{error}</div>
+        )}
         <div 
           ref={scrollRef}
           className="flex gap-8 overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory"

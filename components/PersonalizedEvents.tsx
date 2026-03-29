@@ -12,6 +12,7 @@ export const PersonalizedEvents: React.FC = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const { t } = useTranslations();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,9 +31,9 @@ export const PersonalizedEvents: React.FC = () => {
           'friendsGoing': 'business'
         };
         const data = await api.getEvents({ category: categoryMap[activeTab], page, limit: 12 });
-        if (isMounted) { setEvents(data); setHasMore(data.length >= 12); }
-      } catch (error) {
-        console.error('Error fetching events:', error);
+        if (isMounted) { setEvents(data); setHasMore(data.length >= 12); setError(null); }
+      } catch {
+        if (isMounted) setError(t('directory.errorLoading'));
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -69,6 +70,8 @@ export const PersonalizedEvents: React.FC = () => {
           <div className="py-16 flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : error ? (
+          <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200 text-center">{error}</div>
         ) : (
           <div key={activeTab} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-grid">
             <style>{`

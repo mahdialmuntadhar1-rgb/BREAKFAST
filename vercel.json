@@ -3,12 +3,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/" }
   ],
   "env": {
     "VITE_SUPABASE_URL": "@vite_supabase_url",
     "VITE_SUPABASE_ANON_KEY": "@vite_supabase_anon_key",
-    "VITE_SUPABASE_SERVICE_ROLE": "@vite_supabase_service_role",
     "VITE_SITE_URL": "@vite_site_url"
   }
 }

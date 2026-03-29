@@ -10,6 +10,7 @@ export const DealsMarketplace: React.FC = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const { t } = useTranslations();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -21,9 +22,9 @@ export const DealsMarketplace: React.FC = () => {
       setIsLoading(true);
       try {
         const data = await api.getDeals({ page, limit: 12 });
-        if (isMounted) { setDeals(data); setHasMore(data.length >= 12); }
-      } catch (error) {
-        console.error('Error fetching deals:', error);
+        if (isMounted) { setDeals(data); setHasMore(data.length >= 12); setError(null); }
+      } catch {
+        if (isMounted) setError(t('directory.errorLoading'));
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -54,6 +55,9 @@ export const DealsMarketplace: React.FC = () => {
       </div>
       <div className="container mx-auto px-4 relative z-10">
         <h2 className="text-3xl font-bold text-white mb-8 text-center">{t('deals.title')}</h2>
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200 text-center">{error}</div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {deals.length === 0 ? (
             <div className="col-span-full py-12 flex flex-col items-center justify-center text-center opacity-50">

@@ -84,7 +84,6 @@ export const CityGuide: React.FC = () => {
         setJourneyPoints(plan.waypoints);
           
       } catch (e) {
-          console.error("Failed to generate journey:", e);
           setError(t('cityGuide.generateError'));
       } finally {
           setIsLoading(false);

@@ -38,7 +38,6 @@ export const DataArchitect: React.FC = () => {
       const data = await api.getPostcards(selectedGovernorate);
       setExistingPostcards(data);
     } catch (err) {
-      console.error("Fetch failed", err);
     } finally {
       setIsFetching(false);
     }
@@ -73,7 +72,6 @@ export const DataArchitect: React.FC = () => {
         setExistingPostcards(prev => prev.map(p => (p.id === postcard.id ? updatedPostcard : p)));
       }
     } catch (err) {
-      console.error("Tagline generation failed", err);
     } finally {
       setIsGeneratingTagline(null);
     }
@@ -146,7 +144,6 @@ export const DataArchitect: React.FC = () => {
             });
             tagline = aiResponse.text.trim().replace(/^"|"$/g, '');
         } catch (err) {
-            console.error("AI Generation failed", err);
         }
 
         const postcard: BusinessPostcard = {
@@ -188,7 +185,6 @@ export const DataArchitect: React.FC = () => {
       addLog(`Pipeline complete for ${selectedGovernorate}.`);
 
     } catch (err) {
-      console.error("Pipeline failed", err);
       addLog(`Critical Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsProcessing(false);

@@ -41,7 +41,6 @@ export const SearchPortal: React.FC<SearchPortalProps> = ({ onSearch }) => {
         // Cast window to `any` to access browser-specific speech recognition APIs without TypeScript errors.
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            console.warn("Speech Recognition not supported in this browser.");
             return;
         }
 
@@ -65,7 +64,6 @@ export const SearchPortal: React.FC<SearchPortalProps> = ({ onSearch }) => {
         };
 
         recognition.onerror = (event: any) => {
-            console.error("Speech recognition error:", event.error);
             setIsListening(false);
         };
 

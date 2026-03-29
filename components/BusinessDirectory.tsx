@@ -114,7 +114,6 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
         setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
         setHasMore(result.hasMore);
     } catch (err) {
-        console.error('Error fetching businesses:', err);
         setError(t('directory.errorLoading'));
     } finally {
         setIsLoading(false);

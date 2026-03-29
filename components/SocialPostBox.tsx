@@ -46,7 +46,6 @@ export const SocialPostBox: React.FC<SocialPostBoxProps> = ({ businessId, busine
             setCaption('');
             setImage(null);
         } catch (error) {
-            console.error('Error creating post:', error);
         } finally {
             setIsPosting(false);
         }

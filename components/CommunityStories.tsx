@@ -12,6 +12,7 @@ export const CommunityStories: React.FC = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const { t } = useTranslations();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -20,8 +21,9 @@ export const CommunityStories: React.FC = () => {
         const data = await api.getStories({ page, limit: 12 });
         setStories(data);
         setHasMore(data.length >= 12);
-      } catch (error) {
-        console.error('Error fetching stories:', error);
+        setError(null);
+      } catch {
+        setError(t('directory.errorLoading'));
       } finally {
         setIsLoading(false);
       }
@@ -43,6 +45,9 @@ export const CommunityStories: React.FC = () => {
         <h2 className="text-3xl font-bold text-white mb-8 text-center">
           {t('stories.communityTitle')}
         </h2>
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200 text-center">{error}</div>
+        )}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {stories.length === 0 ? (
             <div className="col-span-full py-12 flex flex-col items-center justify-center text-center opacity-50">

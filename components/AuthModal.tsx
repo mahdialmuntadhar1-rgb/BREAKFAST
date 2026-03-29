@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { supabase } from '../services/supabase';
+import { getSiteUrl } from '../services/env';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -14,28 +15,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { t } = useTranslations();
 
-  const redirectTo = import.meta.env.VITE_SITE_URL || window.location.origin;
+  const redirectTo = getSiteUrl();
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     sessionStorage.setItem('pending_role', role);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo },
     });
+
     if (error) {
-      console.error('Google Sign-In Error:', error);
       sessionStorage.removeItem('pending_role');
+      setErrorMessage(error.message || t('auth.errorGeneric'));
       setIsLoading(false);
       return;
     }
+
     onLogin(role);
   };
 
   const handleEmailAuth = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     sessionStorage.setItem('pending_role', role);
 
     const result =
@@ -44,7 +50,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
         : await supabase.auth.signUp({ email, password, options: { data: { role } } });
 
     if (result.error) {
-      console.error('Email auth error:', result.error);
+      setErrorMessage(result.error.message || t('auth.errorGeneric'));
       setIsLoading(false);
       return;
     }
@@ -69,8 +75,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
             </div>
           )}
 
+          {errorMessage && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {errorMessage}
+            </div>
+          )}
+
           <button onClick={handleGoogleSignIn} disabled={isLoading} className="w-full py-4 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-3 hover:bg-white/90 transition-all disabled:opacity-50">
-            {isLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : <><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" /><span>{t('auth.continueGoogle')}</span></>}
+            {isLoading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : <><img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" /><span>{t('auth.continueGoogle')}</span></>}
           </button>
 
           <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div><div className="relative flex justify-center text-xs uppercase"><span className="bg-dark-bg px-2 text-white/40">{t('auth.orEmail')}</span></div></div>

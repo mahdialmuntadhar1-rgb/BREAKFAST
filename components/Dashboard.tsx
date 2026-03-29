@@ -30,7 +30,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 setTimeout(() => setStatusMsg(null), 3000);
             }
         } catch (error) {
-            console.error('Error creating post:', error);
             setStatusMsg({ type: 'error', text: t('dashboard.postError') || 'Failed to create post.' });
             setTimeout(() => setStatusMsg(null), 3000);
         }
@@ -49,7 +48,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 setTimeout(() => setStatusMsg(null), 3000);
             }
         } catch (error) {
-            console.error('Error updating profile:', error);
             setStatusMsg({ type: 'error', text: t('dashboard.profileError') || 'Failed to update profile.' });
             setTimeout(() => setStatusMsg(null), 3000);
         }
