@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
 import { Navigation, Mic, Trash2, Sparkles } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
 import { GlassCard } from './GlassCard';
@@ -50,46 +49,28 @@ export const CityGuide: React.FC<CityGuideProps> = ({ onGovernorateSelect }) => 
       setIsLoading(true);
       setError(null);
       setJourneyPoints([]);
-      
-      try {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
-        const response = await ai.models.generateContent({
-           model: "gemini-3-flash-preview",
-           contents: `Create a travel itinerary for the following request: "${searchQuery}". The trip should be in Iraq. Provide a list of waypoints.`,
-           config: {
-             responseMimeType: "application/json",
-             responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    waypoints: {
-                        type: Type.ARRAY,
-                        items: {
-                          type: Type.OBJECT,
-                          properties: {
-                            name: {
-                              type: Type.STRING,
-                              description: 'The name of the location or waypoint.',
-                            },
-                            address: {
-                              type: Type.STRING,
-                              description: 'A short address or description of the location.',
-                            },
-                          },
-                          required: ["name", "address"],
-                        },
-                    }
-                },
-                required: ["waypoints"],
-              },
-           },
-        });
 
-        const jsonStr = response.text.trim();
-        const plan = JSON.parse(jsonStr);
-        setJourneyPoints(plan.waypoints);
-          
+      try {
+        const tokens = searchQuery
+          .split(/[,-]|\band\b/gi)
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .slice(0, 4);
+
+        const defaults: Waypoint[] = [
+          { name: 'Baghdad Old City', address: 'Al-Mutanabbi Street, Baghdad' },
+          { name: 'Erbil Citadel', address: 'City Center, Erbil' },
+          { name: 'Basra Corniche', address: 'Shatt al-Arab, Basra' },
+        ];
+
+        const generated = (tokens.length ? tokens : ['Baghdad', 'Erbil', 'Basra']).map((token, index) => ({
+          name: `${token} Stop ${index + 1}`,
+          address: `${token}, Iraq`,
+        }));
+
+        setJourneyPoints(generated.length ? generated : defaults);
       } catch (e) {
-          console.error("Failed to generate journey:", e);
+          console.error('Failed to generate journey:', e);
           setError(t('cityGuide.generateError'));
       } finally {
           setIsLoading(false);

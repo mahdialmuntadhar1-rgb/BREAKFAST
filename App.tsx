@@ -6,8 +6,6 @@ import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
 import { HomePage } from './components/HomePage';
 import { api } from './services/api';
-import { auth } from './firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User, Category, Subcategory, Post } from './types';
 import { TranslationProvider, useTranslations } from './hooks/useTranslations';
 import { motion, AnimatePresence } from 'motion/react';
@@ -93,50 +91,43 @@ const MainContent: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!isMounted) return;
-      
+
+    const bootstrapSession = async () => {
       try {
-        if (firebaseUser) {
-          // Retrieve the role from sessionStorage if it was set during the AuthModal flow
-          const pendingRole = sessionStorage.getItem('pending_role') as 'user' | 'owner' | null;
-          const user = await api.getOrCreateProfile(firebaseUser, pendingRole || 'user');
-          if (isMounted) {
-            setCurrentUser(user);
-            setIsLoggedIn(!!user);
-          }
-          sessionStorage.removeItem('pending_role');
-        } else {
+        const storedUser = localStorage.getItem('iraq-compass-session-user');
+        if (!storedUser) {
           if (isMounted) {
             setCurrentUser(null);
             setIsLoggedIn(false);
           }
+          return;
         }
+
+        const sessionUser = JSON.parse(storedUser) as { id: string; name: string; email: string; avatar: string };
+        const pendingRole = sessionStorage.getItem('pending_role') as 'user' | 'owner' | null;
+        const user = await api.getOrCreateProfile(sessionUser, pendingRole || 'user');
+
+        if (isMounted) {
+          setCurrentUser(user);
+          setIsLoggedIn(!!user);
+        }
+
+        sessionStorage.removeItem('pending_role');
       } catch (err) {
-        console.error("Auth state change error:", err);
+        console.error('Session bootstrap error:', err);
       } finally {
         if (isMounted) {
           setIsAuthReady(true);
         }
       }
-    });
+    };
 
-    // Safety timeout: If Firebase doesn't respond within 4 seconds, 
-    // we proceed to the app anyway to avoid a stuck loading screen.
-    const timeoutId = setTimeout(() => {
-      if (isMounted && !isAuthReady) {
-        console.warn("Auth initialization timed out. Proceeding...");
-        setIsAuthReady(true);
-      }
-    }, 4000);
+    bootstrapSession();
 
     return () => {
       isMounted = false;
-      unsubscribe();
-      clearTimeout(timeoutId);
     };
-  }, [isAuthReady]);
+  }, []);
 
   useEffect(() => {
     setIsSocialLoading(true);
@@ -166,16 +157,27 @@ const MainContent: React.FC = () => {
     }
   }, [highContrast]);
 
-  const handleLogin = (role: 'user' | 'owner') => {
-    // Auth is handled in AuthModal via signInWithPopup, 
-    // which triggers onAuthStateChanged above.
-    // We store the role in sessionStorage to be picked up by the listener.
+  const handleLogin = async (role: 'user' | 'owner') => {
     sessionStorage.setItem('pending_role', role);
+
+    const seed = crypto.randomUUID();
+    const sessionUser = {
+      id: `u_${seed}`,
+      name: role === 'owner' ? 'Business Owner' : 'Explorer User',
+      email: role === 'owner' ? `owner.${seed.slice(0, 8)}@iraqcompass.app` : `user.${seed.slice(0, 8)}@iraqcompass.app`,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`
+    };
+
+    localStorage.setItem('iraq-compass-session-user', JSON.stringify(sessionUser));
+    const user = await api.getOrCreateProfile(sessionUser, role);
+    setCurrentUser(user);
+    setIsLoggedIn(!!user);
+    setIsAuthReady(true);
     setShowAuthModal(false);
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    localStorage.removeItem('iraq-compass-session-user');
     setIsLoggedIn(false);
     setCurrentUser(null);
     setPage('home');
