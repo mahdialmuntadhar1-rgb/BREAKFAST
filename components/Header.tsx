@@ -12,9 +12,10 @@ interface HeaderProps {
     onSignOut: () => void;
     onDashboard: () => void;
     onHome: () => void;
+    activePage?: 'home' | 'dashboard' | 'listing';
 }
 
-export const Header: React.FC<HeaderProps> = ({ isLoggedIn, user, onSignIn, onSignOut, onDashboard, onHome }) => {
+export const Header: React.FC<HeaderProps> = ({ isLoggedIn, user, onSignIn, onSignOut, onDashboard, onHome, activePage }) => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const { t } = useTranslations();
@@ -47,6 +48,11 @@ export const Header: React.FC<HeaderProps> = ({ isLoggedIn, user, onSignIn, onSi
                         Iraq<span className="text-primary group-hover:text-secondary transition-colors">Compass</span>
                     </span>
                 </button>
+
+                <div className="hidden md:flex items-center gap-2">
+                    <button onClick={onHome} className={`px-3 py-1.5 rounded-full text-sm ${activePage === 'home' ? 'bg-primary/30 text-white' : 'text-white/70 hover:text-white'}`}>{t('header.home') || 'Home'}</button>
+                    {isLoggedIn && <button onClick={onDashboard} className={`px-3 py-1.5 rounded-full text-sm ${activePage === 'dashboard' ? 'bg-primary/30 text-white' : 'text-white/70 hover:text-white'}`}>{t('header.dashboard')}</button>}
+                </div>
 
                 <nav className="flex items-center gap-3 sm:gap-6 rtl:flex-row-reverse">
                     <LanguageSelector />
