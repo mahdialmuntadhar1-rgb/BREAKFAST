@@ -30,9 +30,9 @@ export const PersonalizedEvents: React.FC<PersonalizedEventsProps> = ({ onSeeAll
         // Map tabs to categories if needed, or just fetch all for now
         const categoryMap: Record<string, string | undefined> = {
           'forYou': undefined,
-          'trending': 'entertainment',
-          'nearYou': 'food',
-          'friendsGoing': 'business'
+          'trending': 'events_entertainment',
+          'nearYou': 'food_drink',
+          'friendsGoing': 'business_services'
         };
         const data = await api.getEvents({ category: categoryMap[activeTab] });
         if (isMounted) {

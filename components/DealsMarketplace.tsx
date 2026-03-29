@@ -7,9 +7,11 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface DealsMarketplaceProps {
     onSeeAll?: () => void;
+    isLoggedIn?: boolean;
+    onRequireAuth?: () => void;
 }
 
-export const DealsMarketplace: React.FC<DealsMarketplaceProps> = ({ onSeeAll }) => {
+export const DealsMarketplace: React.FC<DealsMarketplaceProps> = ({ onSeeAll, isLoggedIn = false, onRequireAuth }) => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMoreLoading, setIsMoreLoading] = useState(false);
@@ -160,10 +162,13 @@ export const DealsMarketplace: React.FC<DealsMarketplaceProps> = ({ onSeeAll }) 
                   />
                 </div>
 
-                <button className="relative overflow-hidden group/btn w-full py-4 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-widest transition-all duration-300 hover:shadow-glow-white active:scale-95 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => !isLoggedIn && onRequireAuth?.()}
+                  className="relative overflow-hidden group/btn w-full py-4 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-widest transition-all duration-300 hover:shadow-glow-white active:scale-95 flex items-center justify-center gap-2"
+                >
                   <span className="relative z-10 flex items-center gap-2">
                     <Tag className="w-4 h-4" />
-                    {t('deals.claimNow')}
+                    {isLoggedIn ? t('deals.claimNow') : (t('auth.signIn') || 'Sign In')}
                   </span>
                   <div className="absolute inset-0 bg-accent translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                 </button>

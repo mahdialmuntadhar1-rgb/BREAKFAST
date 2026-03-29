@@ -41,11 +41,12 @@ export const heroSlides: HeroSlide[] = [
 
 // Stories
 export const stories: Story[] = [
-  { id: 1, avatar: 'https://i.pravatar.cc/150?u=a', name: 'Zahra', viewed: false, verified: true, thumbnail: 'https://picsum.photos/seed/s1/400/711', userName: 'Zahra Cooks', type: 'business', aiVerified: true, isLive: true, media: ['https://picsum.photos/seed/s1-1/1080/1920', 'https://picsum.photos/seed/s1-2/1080/1920'], timeAgo: '2h ago' },
-  { id: 2, avatar: 'https://i.pravatar.cc/150?u=b', name: 'Ahmed', viewed: false, thumbnail: 'https://picsum.photos/seed/s2/400/711', userName: 'Baghdad Vibes', type: 'community', media: ['https://picsum.photos/seed/s2-1/1080/1920'], timeAgo: '5h ago' },
-  { id: 3, avatar: 'https://i.pravatar.cc/150?u=c', name: 'Layla', viewed: true, verified: true, thumbnail: 'https://picsum.photos/seed/s3/400/711', userName: 'Erbil Boutique', type: 'business', media: ['https://picsum.photos/seed/s3-1/1080/1920'], timeAgo: '1d ago' },
-  { id: 4, avatar: 'https://i.pravatar.cc/150?u=d', name: 'Yusuf', viewed: true, thumbnail: 'https://picsum.photos/seed/s4/400/711', userName: 'Kurdistan Hikes', type: 'community', aiVerified: true, media: ['https://picsum.photos/seed/s4-1/1080/1920', 'https://picsum.photos/seed/s4-2/1080/1920'], timeAgo: '1d ago' },
-  { id: 5, avatar: 'https://i.pravatar.cc/150?u=e', name: 'Fatima', viewed: false, thumbnail: 'https://picsum.photos/seed/s5/400/711', userName: 'Basra Arts', type: 'community', media: ['https://picsum.photos/seed/s5-1/1080/1920'], timeAgo: '2d ago' },
+  { id: 1, avatar: 'https://i.pravatar.cc/150?u=a', name: 'Zahra', viewed: false, verified: true, thumbnail: 'https://picsum.photos/seed/s1/400/711', userName: 'Baghdad Brunch House', type: 'business', aiVerified: true, isLive: true, media: ['https://picsum.photos/seed/s1-1/1080/1920', 'https://picsum.photos/seed/s1-2/1080/1920'], timeAgo: '2h ago' },
+  { id: 2, avatar: 'https://i.pravatar.cc/150?u=b', name: 'Ahmed', viewed: false, thumbnail: 'https://picsum.photos/seed/s2/400/711', userName: 'Erbil Weekend Guide', type: 'community', media: ['https://picsum.photos/seed/s2-1/1080/1920'], timeAgo: '5h ago' },
+  { id: 3, avatar: 'https://i.pravatar.cc/150?u=c', name: 'Layla', viewed: true, verified: true, thumbnail: 'https://picsum.photos/seed/s3/400/711', userName: 'Slemani Book Café', type: 'business', media: ['https://picsum.photos/seed/s3-1/1080/1920'], timeAgo: '1d ago' },
+  { id: 4, avatar: 'https://i.pravatar.cc/150?u=d', name: 'Yusuf', viewed: true, thumbnail: 'https://picsum.photos/seed/s4/400/711', userName: 'Hawler Trails', type: 'community', aiVerified: true, media: ['https://picsum.photos/seed/s4-1/1080/1920', 'https://picsum.photos/seed/s4-2/1080/1920'], timeAgo: '1d ago' },
+  { id: 5, avatar: 'https://i.pravatar.cc/150?u=e', name: 'Fatima', viewed: false, thumbnail: 'https://picsum.photos/seed/s5/400/711', userName: 'Basra Riverside Arts', type: 'community', media: ['https://picsum.photos/seed/s5-1/1080/1920'], timeAgo: '2d ago' },
+  { id: 6, avatar: 'https://i.pravatar.cc/150?u=f', name: 'Ranj', viewed: false, verified: true, thumbnail: 'https://picsum.photos/seed/s6/400/711', userName: 'Sulaymaniyah Creators Hub', type: 'business', media: ['https://picsum.photos/seed/s6-1/1080/1920'], timeAgo: '3h ago' },
 ];
 
 // Categories
@@ -867,6 +868,8 @@ export const events: Event[] = [
   { id: 4, image: 'https://picsum.photos/seed/e4/600/400', title: 'Slemani International Book Fair', titleKey: 'events.items.bookFair.title', date: new Date(new Date().setDate(new Date().getDate() + 20)), venue: 'Slemani Expo Center', venueKey: 'events.items.bookFair.venue', attendees: 5000, price: 5000, category: 'education', governorate: 'sulaymaniyah', accessibility: { familyFriendly: true, wheelchairAccessible: true } },
   { id: 5, image: 'https://picsum.photos/seed/e5/600/400', title: 'Women in Business Networking Event', titleKey: 'events.items.womenBusiness.title', date: new Date(new Date().setDate(new Date().getDate() + 7)), venue: 'The Station, Baghdad', venueKey: 'events.items.womenBusiness.venue', attendees: 150, price: 15000, category: 'business_services', governorate: 'baghdad', accessibility: { womenOnly: true } },
   { id: 6, image: 'https://picsum.photos/seed/e6/600/400', title: 'Family Fun Day at the Park', titleKey: 'events.items.familyDay.title', date: new Date(new Date().setDate(new Date().getDate() + 2)), venue: 'Sami Abdulrahman Park, Erbil', venueKey: 'events.items.familyDay.venue', attendees: 700, price: 0, category: 'public_essential', governorate: 'erbil', accessibility: { familyFriendly: true, sensoryFriendly: true } },
+  { id: 7, image: 'https://picsum.photos/seed/e7/600/400', title: 'Basra Riverside Food Fair', aiRecommended: true, date: new Date(new Date().setDate(new Date().getDate() + 12)), venue: 'Shatt al-Arab Corniche, Basra', attendees: 940, price: 5000, category: 'food_drink', governorate: 'basra', accessibility: { familyFriendly: true, wheelchairAccessible: true } },
+  { id: 8, image: 'https://picsum.photos/seed/e8/600/400', title: 'Sulaymaniyah Startup Night', date: new Date(new Date().setDate(new Date().getDate() + 9)), venue: 'Goizha Innovation Hall, Sulaymaniyah', attendees: 420, price: 12000, category: 'business_services', governorate: 'sulaymaniyah', accessibility: { womenOnly: false, signLanguage: true } },
 ];
 
 // Deals
@@ -874,6 +877,8 @@ export const deals: Deal[] = [
   { id: 1, discount: 25, businessLogo: 'https://picsum.photos/seed/bl1/64/64', title: 'Off on All Main Courses', titleKey: 'deals.items.zaytona.title', description: 'Enjoy a delicious discount at Zaytona Restaurant.', descriptionKey: 'deals.items.zaytona.description', expiresIn: '3 Days', expiresInKey: 'deals.items.zaytona.expires', claimed: 78, total: 200 },
   { id: 2, discount: 50, businessLogo: 'https://picsum.photos/seed/bl2/64/64', title: 'Off Your First Month', titleKey: 'deals.items.fitness.title', description: 'Join Fitness World Gym and get half price.', descriptionKey: 'deals.items.fitness.description', expiresIn: '1 Week', expiresInKey: 'deals.items.fitness.expires', claimed: 112, total: 150 },
   { id: 3, discount: 15, businessLogo: 'https://picsum.photos/seed/bl3/64/64', title: 'Off All Electronics', titleKey: 'deals.items.techcity.title', description: 'TechCity summer sale is here. Don\'t miss out!', descriptionKey: 'deals.items.techcity.description', expiresIn: '5 Days', expiresInKey: 'deals.items.techcity.expires', claimed: 204, total: 500 },
+  { id: 4, discount: 30, businessLogo: 'https://picsum.photos/seed/bl4/64/64', title: 'Basra Seafood Weekend', description: '30% off family platters at Al Bahar Restaurant in Basra.', expiresIn: '4 Days', claimed: 64, total: 160 },
+  { id: 5, discount: 20, businessLogo: 'https://picsum.photos/seed/bl5/64/64', title: 'Erbil Co-working Pass', description: 'Save on monthly desks at Citadel Workspaces, Erbil.', expiresIn: '6 Days', claimed: 44, total: 120 },
 ];
 
 export const posts: Post[] = [
@@ -909,6 +914,28 @@ export const posts: Post[] = [
     createdAt: new Date(Date.now() - 3600000 * 5),
     likes: 210,
     isVerified: true
+  },
+  {
+    id: 'p4',
+    businessId: '12',
+    businessName: 'Basra Marina Café',
+    businessAvatar: 'https://picsum.photos/seed/b4/100/100',
+    caption: 'Sunset set-menu is now live on the Basra Corniche. Bring your friends this evening.',
+    imageUrl: 'https://picsum.photos/seed/post4/800/600',
+    createdAt: new Date(Date.now() - 3600000 * 9),
+    likes: 96,
+    isVerified: true
+  },
+  {
+    id: 'p5',
+    businessId: '18',
+    businessName: 'Slemani Craft Market',
+    businessAvatar: 'https://picsum.photos/seed/b5/100/100',
+    caption: 'Local artisans from Sulaymaniyah are showcasing handmade ceramics and textiles all weekend.',
+    imageUrl: 'https://picsum.photos/seed/post5/800/600',
+    createdAt: new Date(Date.now() - 3600000 * 14),
+    likes: 72,
+    isVerified: false
   }
 ];
 
@@ -962,6 +989,19 @@ export const inclusiveFeaturesList = [
 export const translations = {
   en: {
     items: "items",
+    nav: {
+        home: "Home",
+        explore: "Explore",
+        businesses: "Businesses",
+        events: "Events",
+        deals: "Deals",
+        stories: "Stories",
+    },
+    common: {
+        back: "Back",
+        continue: "Continue",
+        in: "in",
+    },
     header: {
         signIn: "Sign In",
         dashboard: "Dashboard",
@@ -969,6 +1009,7 @@ export const translations = {
         backToHome: "Back to Home",
     },
     hero: {
+        badge: "AI-Powered Discovery",
         searchPlaceholder: "Search for places, events, or services...",
         suggestionsTitle: "Popular Searches",
         filters: {
@@ -1340,6 +1381,11 @@ export const translations = {
         orEmail: "Or continue with email",
         noAccount: "Don't have an account? Sign up",
         haveAccount: "Already have an account? Sign in",
+        credentialsSubtitle: "Secure your access to the platform",
+        exploreAsGuest: "Explore as Guest",
+    },
+    footer: {
+        description: "The definitive AI-powered platform for discovering the heartbeat of Mesopotamia. From ancient wonders to modern luxuries.",
     },
     social: {
         ecosystemTitle: "Social Ecosystem",

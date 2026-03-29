@@ -193,6 +193,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
                                     {t('common.continue') || 'Continue'}
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
+                                <button
+                                    onClick={onClose}
+                                    className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white/70 font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
+                                >
+                                    {t('auth.exploreAsGuest') || 'Explore as Guest'}
+                                </button>
                             </motion.div>
                         )}
 

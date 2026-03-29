@@ -11,6 +11,14 @@ interface TranslationContextType {
     setLang: (lang: Language) => void;
 }
 
+const humanizeKey = (key: string): string => {
+    const leaf = key.split('.').pop() || key;
+    return leaf
+        .replace(/_/g, ' ')
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/^./, (char) => char.toUpperCase());
+};
+
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
 
 export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -46,10 +54,10 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 for (const fk of keys) {
                     fallbackResult = fallbackResult?.[fk];
                 }
-                return fallbackResult || key;
+                return fallbackResult || humanizeKey(key);
             }
         }
-        return result || key;
+        return result || humanizeKey(key);
     }, [lang]);
 
     // FIX: Replaced JSX with React.createElement to be compatible with a .ts file extension.

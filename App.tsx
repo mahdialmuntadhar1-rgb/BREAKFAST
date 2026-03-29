@@ -291,6 +291,7 @@ const MainContent: React.FC = () => {
                 highContrast={highContrast}
                 setHighContrast={setHighContrast}
                 onSeeAll={handleSeeAll}
+                onRequireAuth={() => setShowAuthModal(true)}
               />
             </motion.div>
           )}

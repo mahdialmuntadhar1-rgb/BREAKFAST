@@ -27,6 +27,7 @@ interface HomePageProps {
   highContrast: boolean;
   setHighContrast: (val: boolean) => void;
   onSeeAll: (type: 'businesses' | 'deals' | 'events' | 'posts') => void;
+  onRequireAuth: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -42,6 +43,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   highContrast,
   setHighContrast,
   onSeeAll,
+  onRequireAuth,
 }) => {
   const { t } = useTranslations();
 
@@ -77,7 +79,11 @@ export const HomePage: React.FC<HomePageProps> = ({
       
       <div className="space-y-32 py-24">
         <PersonalizedEvents onSeeAll={() => onSeeAll('events')} />
-        <DealsMarketplace onSeeAll={() => onSeeAll('deals')} />
+        <DealsMarketplace
+          onSeeAll={() => onSeeAll('deals')}
+          isLoggedIn={isLoggedIn}
+          onRequireAuth={onRequireAuth}
+        />
         <CommunityStories onSeeAll={() => onSeeAll('posts')} />
         <CityGuide onGovernorateSelect={onGovernorateChange} />
       </div>
@@ -88,4 +94,3 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
-
