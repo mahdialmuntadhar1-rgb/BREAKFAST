@@ -210,7 +210,7 @@ export const api = {
             if (params.category && params.category !== 'all') filters.push(`category=eq.${encodeURIComponent(params.category)}`);
             if (params.governorate && params.governorate !== 'all') filters.push(`governorate=eq.${encodeURIComponent(params.governorate)}`);
             if (params.city?.trim()) filters.push(`city=ilike.*${encodeURIComponent(params.city.trim())}*`);
-            if (params.featuredOnly) filters.push('is_featured=is.true');
+            if (params.featuredOnly) filters.push('isFeatured=is.true');
 
             const rows = await fetchSupabaseRows<any>(path, {
                 orderBy: 'name',
@@ -249,7 +249,7 @@ export const api = {
         const fetchPosts = async () => {
             try {
                 const rows = await fetchSupabaseRows<any>(path, {
-                    orderBy: 'created_at',
+                    orderBy: 'createdAt',
                     ascending: false,
                     limit: 50
                 });
@@ -281,7 +281,7 @@ export const api = {
         const path = 'deals';
         try {
             const rows = await fetchSupabaseRows<any>(path, {
-                orderBy: 'created_at',
+                orderBy: 'createdAt',
                 ascending: false,
                 limit: 10
             });
