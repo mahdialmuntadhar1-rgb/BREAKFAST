@@ -9,6 +9,8 @@ export const PersonalizedEvents: React.FC = () => {
   const [activeTab, setActiveTab] = useState('forYou');
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -27,8 +29,8 @@ export const PersonalizedEvents: React.FC = () => {
           'nearYou': 'food',
           'friendsGoing': 'business'
         };
-        const data = await api.getEvents({ category: categoryMap[activeTab] });
-        if (isMounted) setEvents(data);
+        const data = await api.getEvents({ category: categoryMap[activeTab], page, limit: 12 });
+        if (isMounted) { setEvents(data); setHasMore(data.length >= 12); }
       } catch (error) {
         console.error('Error fetching events:', error);
       } finally {
@@ -43,7 +45,7 @@ export const PersonalizedEvents: React.FC = () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [activeTab]);
+  }, [activeTab, page]);
 
   return (
     <section className="py-16">
@@ -112,6 +114,13 @@ export const PersonalizedEvents: React.FC = () => {
                 </GlassCard>
               ))
             )}
+          </div>
+        )}
+        {hasMore && !isLoading && (
+          <div className="mt-8 text-center">
+            <button onClick={() => setPage((p) => p + 1)} className="px-6 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20">
+              {t('directory.loadMore')}
+            </button>
           </div>
         )}
       </div>
