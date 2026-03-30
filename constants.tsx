@@ -22,19 +22,19 @@ export const heroSlides: HeroSlide[] = [
         id: 1,
         titleKey: "hero.slide1Title",
         subtitleKey: "hero.slide1Subtitle",
-        image: "https://picsum.photos/seed/h1/1920/1080"
+        image: "https://picsum.photos/seed/baghdad-city/1920/1080"
     },
     {
         id: 2,
         titleKey: "hero.slide2Title",
         subtitleKey: "hero.slide2Subtitle",
-        image: "https://picsum.photos/seed/h2/1920/1080"
+        image: "https://picsum.photos/seed/erbil-citadel/1920/1080"
     },
     {
         id: 3,
         titleKey: "hero.slide3Title",
         subtitleKey: "hero.slide3Subtitle",
-        image: "https://picsum.photos/seed/h3/1920/1080"
+        image: "https://picsum.photos/seed/iraq-cafe/1920/1080"
     }
 ];
 
@@ -886,7 +886,8 @@ export const posts: Post[] = [
     imageUrl: 'https://picsum.photos/seed/post1/800/600',
     createdAt: new Date(),
     likes: 124,
-    isVerified: true
+    isVerified: true,
+    governorate: 'erbil'
   },
   {
     id: 'p2',
@@ -897,7 +898,8 @@ export const posts: Post[] = [
     imageUrl: 'https://picsum.photos/seed/post2/800/600',
     createdAt: new Date(Date.now() - 3600000 * 2),
     likes: 85,
-    isVerified: true
+    isVerified: true,
+    governorate: 'baghdad'
   },
   {
     id: 'p3',
@@ -908,7 +910,8 @@ export const posts: Post[] = [
     imageUrl: 'https://picsum.photos/seed/post3/800/600',
     createdAt: new Date(Date.now() - 3600000 * 5),
     likes: 210,
-    isVerified: true
+    isVerified: true,
+    governorate: 'erbil'
   }
 ];
 
@@ -985,9 +988,9 @@ export const translations = {
         slide3Subtitle: "Join events, support local businesses, and share your experiences with a vibrant community.",
         badge: "AI-Powered Discovery",
         slogans: [
-            "Your Compass to Iraq's Best",
-            "Discover. Connect. Grow.",
-            "The Heart of Iraqi Business"
+            "See what’s happening in your city",
+            "Where do you want to go today?",
+            "Discover Iraq like never before"
         ]
     },
     stories: {
@@ -1198,7 +1201,9 @@ export const translations = {
     },
     actions: {
         book: "Book Now",
-        details: "View Details"
+        details: "View Details",
+        exploreBusinesses: "Explore Businesses",
+        whatsHappening: "What's Happening"
     },
     events: {
         personalizedTitle: "Events, Personalized For You",
@@ -1410,9 +1415,9 @@ export const translations = {
         slide3Subtitle: "انضم إلى الفعاليات، وادعم الشركات المحلية، وشارك تجاربك مع مجتمع حيوي.",
         badge: "اكتشاف مدعوم بالذكاء الاصطناعي",
         slogans: [
-            "بوصلتك لأفضل ما في العراق",
-            "اكتشف. تواصل. انمو.",
-            "قلب الأعمال العراقية"
+            "شوف شنو صاير بمدينتك",
+            "وين تحب تروح اليوم؟",
+            "اكتشف العراق بطريقة جديدة"
         ]
     },
     stories: {
@@ -1622,7 +1627,9 @@ export const translations = {
     },
     actions: {
         book: "احجز الآن",
-        details: "عرض التفاصيل"
+        details: "عرض التفاصيل",
+        exploreBusinesses: "استكشف الأعمال",
+        whatsHappening: "شنو صاير؟"
     },
     events: {
         personalizedTitle: "فعاليات مخصصة لك",
@@ -1834,9 +1841,9 @@ export const translations = {
         slide3Subtitle: "بەشداری لە چالاکییەکان بکە، پشتگیری لە کارە ناوخۆییەکان بکە و ئەزموونەکانت لەگەڵ کۆمەڵگەیەکی زیندوو هاوبەش بکە.",
         badge: "دۆزینەوەی زیرەکی دەستکرد",
         slogans: [
-            "قیبلەنمای تۆ بۆ باشترینەکانی عێراق",
-            "بدۆزەرەوە. پەیوەندی ببەستە. گەشە بکە.",
-            "دڵی کارە عێراقییەکان"
+            "بزانە چی لە شارەکەتدا ڕوودەدات",
+            "دەتەوێت بۆ کوێ بچیت ئەمڕۆ؟",
+            "عێراق بە شێوەیەکی نوێ بدۆزەوە"
         ]
     },
     stories: {
@@ -2047,7 +2054,9 @@ export const translations = {
     },
     actions: {
         book: "ئێستا حیجز بکە",
-        details: "پیشاندانی وردەکاری"
+        details: "پیشاندانی وردەکاری",
+        exploreBusinesses: "گەڕان لە کارەکان",
+        whatsHappening: "چی ڕوودەدات؟"
     },
     events: {
         personalizedTitle: "بۆنەکان، تایبەت بۆ تۆ",

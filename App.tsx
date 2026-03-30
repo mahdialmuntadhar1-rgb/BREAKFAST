@@ -6,6 +6,8 @@ import { AuthModal } from './components/AuthModal';
 import { Dashboard } from './components/Dashboard';
 import { SubcategoryModal } from './components/SubcategoryModal';
 import { HomePage } from './components/HomePage';
+import { BottomNav } from './components/BottomNav';
+import { InstallBanner } from './components/InstallBanner';
 import { api } from './services/api';
 import { auth } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -284,6 +286,7 @@ const MainContent: React.FC = () => {
                 highContrast={highContrast}
                 setHighContrast={setHighContrast}
                 onSeeAll={handleSeeAll}
+                onBusinessClick={handleBusinessClick}
               />
             </motion.div>
           )}
@@ -336,6 +339,26 @@ const MainContent: React.FC = () => {
         category={selectedCategory} 
         onClose={() => setSelectedCategory(null)}
         onSubcategorySelect={handleSubcategorySelect}
+      />
+      
+      <InstallBanner />
+      
+      <BottomNav 
+        activeTab={page === 'home' ? 'home' : page === 'listing' ? 'explore' : page === 'dashboard' ? 'profile' : 'home'}
+        onTabChange={(tab) => {
+          if (tab === 'home') navigateTo('home');
+          if (tab === 'explore') {
+            setListingFilter({});
+            setPage('listing');
+          }
+          if (tab === 'deals') {
+            setListingFilter({ categoryId: 'retail' });
+            setPage('listing');
+          }
+          if (tab === 'profile') navigateTo('dashboard');
+        }}
+        isLoggedIn={isLoggedIn}
+        onSignIn={() => setShowAuthModal(true)}
       />
     </div>
   );

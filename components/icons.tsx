@@ -63,7 +63,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  ArrowRight
+  ArrowRight,
+  Home,
+  Download
 } from 'lucide-react';
 
 export {
@@ -131,6 +133,8 @@ export {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  ArrowRight
+  ArrowRight,
+  Home,
+  Download
 };
 

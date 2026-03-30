@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { categories, governorates } from '../constants';
-import { api, type BusinessesCursor, type BusinessesDataSource } from '../services/api';
+import { api } from '../services/api';
 import type { Business } from '../types';
 import { Star, Grid3x3, List, MapPin, CheckCircle, ArrowLeft, Loader2 } from './icons';
 import { useTranslations } from '../hooks/useTranslations';
@@ -26,38 +27,66 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business, viewMode, onClick
 
   if (viewMode === 'list') {
     return (
-      <GlassCard className="p-4 flex gap-4 text-start rtl:text-right cursor-pointer hover:border-primary/30 transition-all" onClick={() => onClick?.(business)}>
-        <img src={displayImage} alt={displayName} className="w-24 h-24 rounded-xl object-cover flex-shrink-0" />
-        <div className="flex-1">
-          <h3 className="text-white font-semibold text-lg mb-1">{displayName}</h3>
-          <p className="text-white/60 text-sm mb-2">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white">{business.rating}</span></div>
-            <div className="flex items-center gap-1 text-white/60"><MapPin className="w-4 h-4" />{business.distance || '1.2'} km</div>
+      <GlassCard className="p-3 md:p-4 flex gap-4 text-start rtl:text-right cursor-pointer hover:border-primary/30 transition-all active:scale-[0.98]" onClick={() => onClick?.(business)}>
+        <img src={displayImage} alt={displayName} className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <h3 className="text-white font-bold text-base md:text-lg mb-1 truncate">{displayName}</h3>
+          <p className="text-white/60 text-xs md:text-sm mb-2 truncate">
+            {t(categories.find(c => c.id === business.category)?.nameKey || business.category)}
+          </p>
+          <div className="flex items-center gap-3 md:gap-4 text-[10px] md:text-sm">
+            <div className="flex items-center gap-1">
+              <Star className="w-3 h-3 md:w-4 md:h-4 text-accent fill-accent" />
+              <span className="text-white font-bold">{business.rating}</span>
+            </div>
+            <div className="flex items-center gap-1 text-white/60">
+              <MapPin className="w-3 h-3 md:w-4 md:h-4" />
+              {business.distance || '1.2'} km
+            </div>
           </div>
         </div>
-        <div className="flex flex-col justify-center gap-2">
-          <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-medium text-sm">{t('directory.view')}</button>
-          <button className="px-4 py-2 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 text-white font-medium text-sm" onClick={(e) => { e.stopPropagation(); /* Handle contact */ }}>{t('directory.contact')}</button>
+        <div className="hidden sm:flex flex-col justify-center gap-2">
+          <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-black text-[10px] uppercase tracking-widest">{t('directory.view')}</button>
+          <button className="px-4 py-2 rounded-xl backdrop-blur-xl bg-white/10 border border-white/10 text-white font-black text-[10px] uppercase tracking-widest" onClick={(e) => { e.stopPropagation(); /* Handle contact */ }}>{t('directory.contact')}</button>
         </div>
       </GlassCard>
     );
   }
 
   return (
-    <GlassCard className="overflow-hidden group text-start p-0 cursor-pointer hover:border-primary/30 transition-all" onClick={() => onClick?.(business)}>
-      <div className="relative h-48 overflow-hidden">
-        <img src={displayImage} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-        {isVerified && <div className="absolute top-3 end-3 w-8 h-8 rounded-full bg-secondary flex items-center justify-center"><CheckCircle className="w-5 h-5 text-dark-bg" /></div>}
-      </div>
-      <div className="p-5">
-        <h3 className="text-white font-semibold text-lg mb-2">{displayName}</h3>
-        <p className="text-white/60 text-sm mb-3">{t(categories.find(c => c.id === business.category)?.nameKey || business.category)}</p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1"><Star className="w-4 h-4 text-accent fill-accent" /><span className="text-white font-medium">{business.rating}</span><span className="text-white/60 text-sm">({displayReviews})</span></div>
-          <div className="flex items-center gap-1 text-white/60 text-sm"><MapPin className="w-4 h-4" />{business.distance || '1.2'} km</div>
+    <GlassCard className="overflow-hidden group text-start p-0 cursor-pointer hover:border-primary/30 transition-all active:scale-[0.98]" onClick={() => onClick?.(business)}>
+      <div className="relative aspect-[16/10] overflow-hidden">
+        <img src={displayImage} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {isVerified && (
+          <div className="absolute top-3 end-3 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg border-2 border-black/20">
+            <CheckCircle className="w-5 h-5 text-white" />
+          </div>
+        )}
+        <div className="absolute bottom-3 start-3 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
+          <p className="text-[8px] font-black text-white uppercase tracking-widest">
+            {t(categories.find(c => c.id === business.category)?.nameKey || business.category)}
+          </p>
         </div>
-        <button className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-semibold hover:shadow-glow-primary transition-all">{t('directory.viewProfile')}</button>
+      </div>
+      <div className="p-4 md:p-5">
+        <h3 className="text-white font-black text-lg md:text-xl mb-1 tracking-tight line-clamp-1 group-hover:text-primary transition-colors">{displayName}</h3>
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 text-accent fill-accent" />
+              <span className="text-white font-black text-sm">{business.rating}</span>
+            </div>
+            <span className="text-white/30 text-[10px] font-black uppercase tracking-widest">({displayReviews} {t('directory.reviews') || 'Reviews'})</span>
+          </div>
+          <div className="flex items-center gap-1 text-white/40 text-[10px] font-black uppercase tracking-widest">
+            <MapPin className="w-3.5 h-3.5" />
+            {business.distance || '1.2'} km
+          </div>
+        </div>
+        <button className="w-full mt-5 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-[0.2em] group-hover:bg-primary group-hover:border-primary group-hover:text-white transition-all duration-500">
+          {t('directory.viewProfile')}
+        </button>
       </div>
     </GlassCard>
   );
@@ -79,11 +108,10 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pageSize] = useState(20);
   const [businessesData, setBusinessesData] = useState<Business[]>([]);
-  const [lastDoc, setLastDoc] = useState<BusinessesCursor | undefined>(undefined);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | undefined>(undefined);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<BusinessesDataSource>('mock');
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -116,7 +144,6 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
         setBusinessesData(prev => isLoadMore ? [...prev, ...result.data] : result.data);
         setLastDoc(result.lastDoc);
         setHasMore(result.hasMore);
-        setDataSource(result.source || 'mock');
     } catch (err) {
         console.error('Error fetching businesses:', err);
         setError(t('directory.errorLoading'));
@@ -161,9 +188,6 @@ export const BusinessDirectory: React.FC<BusinessDirectoryProps> = ({ initialFil
                     <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
                         {getContextualTitle()}
                     </h2>
-                    <p className="text-xs text-white/60">
-                        Data Source: {dataSource === 'supabase' ? 'Supabase' : 'Mock'}
-                    </p>
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">

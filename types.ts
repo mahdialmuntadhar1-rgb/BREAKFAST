@@ -101,6 +101,7 @@ export interface Deal {
   claimed: number;
   total: number;
   createdAt?: any;
+  governorate?: string;
 }
 
 export interface User {
@@ -123,6 +124,7 @@ export interface Post {
   createdAt: Date;
   likes: number;
   isVerified?: boolean;
+  governorate?: string;
 }
 
 export interface BusinessPostcard {

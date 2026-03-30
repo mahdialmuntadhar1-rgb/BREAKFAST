@@ -7,9 +7,10 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface DealsMarketplaceProps {
     onSeeAll?: () => void;
+    selectedGovernorate?: string;
 }
 
-export const DealsMarketplace: React.FC<DealsMarketplaceProps> = ({ onSeeAll }) => {
+export const DealsMarketplace: React.FC<DealsMarketplaceProps> = ({ onSeeAll, selectedGovernorate = 'all' }) => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMoreLoading, setIsMoreLoading] = useState(false);
@@ -25,7 +26,7 @@ export const DealsMarketplace: React.FC<DealsMarketplaceProps> = ({ onSeeAll }) 
     const fetchDeals = async () => {
       setIsLoading(true);
       try {
-        const data = await api.getDeals();
+        const data = await api.getDeals({ governorate: selectedGovernorate });
         if (isMounted) {
           setDeals(data);
           // For demo purposes, assume we have more if we got some data
@@ -45,7 +46,7 @@ export const DealsMarketplace: React.FC<DealsMarketplaceProps> = ({ onSeeAll }) 
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, []);
+  }, [selectedGovernorate]);
 
   const handleLoadMore = async () => {
     setIsMoreLoading(true);

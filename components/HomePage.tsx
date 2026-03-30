@@ -48,8 +48,13 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const { t } = useTranslations();
 
+  const filteredPosts = React.useMemo(() => {
+    if (selectedGovernorate === 'all') return posts;
+    return posts.filter(post => post.governorate?.toLowerCase() === selectedGovernorate.toLowerCase());
+  }, [posts, selectedGovernorate]);
+
   return (
-    <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white">
+    <div className="min-h-screen bg-dark-bg selection:bg-primary/30 selection:text-white pb-24 md:pb-0">
       <HeroSection onExplore={() => onSeeAll('businesses')} onBusinessClick={onBusinessClick} />
       
       <GovernorateSelection 
@@ -57,7 +62,11 @@ export const HomePage: React.FC<HomePageProps> = ({
         onGovernorateChange={onGovernorateChange}
       />
 
-      <StoriesRing />
+      <FeaturedSection 
+        onSeeAll={() => onSeeAll('businesses')} 
+        onBusinessClick={onBusinessClick} 
+        selectedGovernorate={selectedGovernorate}
+      />
       
       <CategoriesSection 
         onCategoryClick={onCategoryClick} 
@@ -65,10 +74,12 @@ export const HomePage: React.FC<HomePageProps> = ({
         setCurrentPage={setCurrentPage}
       />
 
+      <StoriesRing />
+
       <div className="container mx-auto px-4 py-24 relative">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
               <BusinessGridSection 
-                posts={posts} 
+                posts={filteredPosts} 
                 isLoading={isSocialLoading} 
                 isLoggedIn={isLoggedIn} 
                 onSeeAll={() => onSeeAll('posts')}
@@ -82,11 +93,9 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
       </div>
 
-      <FeaturedSection onSeeAll={() => onSeeAll('businesses')} />
-      
       <div className="space-y-32 py-24">
-        <PersonalizedEvents onSeeAll={() => onSeeAll('events')} />
-        <DealsMarketplace onSeeAll={() => onSeeAll('deals')} />
+        <PersonalizedEvents onSeeAll={() => onSeeAll('events')} selectedGovernorate={selectedGovernorate} />
+        <DealsMarketplace onSeeAll={() => onSeeAll('deals')} selectedGovernorate={selectedGovernorate} />
         <CommunityStories onSeeAll={() => onSeeAll('posts')} />
         <CityGuide onGovernorateSelect={onGovernorateChange} />
       </div>

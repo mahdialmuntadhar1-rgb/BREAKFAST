@@ -8,9 +8,10 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface PersonalizedEventsProps {
     onSeeAll?: () => void;
+    selectedGovernorate?: string;
 }
 
-export const PersonalizedEvents: React.FC<PersonalizedEventsProps> = ({ onSeeAll }) => {
+export const PersonalizedEvents: React.FC<PersonalizedEventsProps> = ({ onSeeAll, selectedGovernorate = 'all' }) => {
   const [activeTab, setActiveTab] = useState('forYou');
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +35,10 @@ export const PersonalizedEvents: React.FC<PersonalizedEventsProps> = ({ onSeeAll
           'nearYou': 'food',
           'friendsGoing': 'business'
         };
-        const data = await api.getEvents({ category: categoryMap[activeTab] });
+        const data = await api.getEvents({ 
+          category: categoryMap[activeTab],
+          governorate: selectedGovernorate
+        });
         if (isMounted) {
           setEvents(data);
           setHasMore(data.length > 0);
@@ -53,7 +57,7 @@ export const PersonalizedEvents: React.FC<PersonalizedEventsProps> = ({ onSeeAll
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [activeTab]);
+  }, [activeTab, selectedGovernorate]);
 
   const handleLoadMore = async () => {
     setIsMoreLoading(true);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { heroSlides } from '../constants';
+import { heroSlides, translations } from '../constants';
 import { useTranslations } from '../hooks/useTranslations';
 import { Sparkles } from './icons';
 import { motion, AnimatePresence } from 'motion/react';
@@ -15,11 +15,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
     const [activeSlogan, setActiveSlogan] = React.useState(0);
     const { t } = useTranslations();
 
-    const slogans = (t('hero.slogans') as unknown as string[]) || [
-        "Your Compass to Iraq's Best",
-        "Discover. Connect. Grow.",
-        "The Heart of Iraqi Business"
-    ];
+    const slogans = React.useMemo(() => {
+        const enSlogans = (translations.en.hero.slogans as string[]) || [];
+        const arSlogans = (translations.ar.hero.slogans as string[]) || [];
+        const kuSlogans = (translations.ku.hero.slogans as string[]) || [];
+        
+        // Interleave them: EN1, AR1, KU1, EN2, AR2, KU2, EN3, AR3, KU3
+        const combined = [];
+        for (let i = 0; i < 3; i++) {
+            if (enSlogans[i]) combined.push(enSlogans[i]);
+            if (arSlogans[i]) combined.push(arSlogans[i]);
+            if (kuSlogans[i]) combined.push(kuSlogans[i]);
+        }
+        return combined.length > 0 ? combined : [
+            "See what’s happening in your city",
+            "شوف شنو صاير بمدينتك",
+            "بزانە چی لە شارەکەتدا ڕوودەدات"
+        ];
+    }, []);
 
     React.useEffect(() => {
         const slideTimer = setInterval(() => {
@@ -28,7 +41,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
         
         const sloganTimer = setInterval(() => {
             setActiveSlogan(prev => (prev + 1) % slogans.length);
-        }, 3000);
+        }, 4000);
 
         return () => {
             clearInterval(slideTimer);
@@ -52,7 +65,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
                         alt={t(heroSlides[activeSlide].titleKey)} 
                         className="absolute inset-0 w-full h-full object-cover" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-dark-bg/40 via-dark-bg/70 to-dark-bg"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-dark-bg/60 via-dark-bg/80 to-dark-bg"></div>
                 </motion.div>
             </AnimatePresence>
 
@@ -67,17 +80,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
                         className="max-w-5xl mx-auto"
                     >
                         {/* Rotating Slogan Badge */}
-                        <div className="h-12 mb-6 flex justify-center items-center">
+                        <div className="h-16 mb-8 flex justify-center items-center">
                             <AnimatePresence mode="wait">
                                 <motion.div 
                                     key={activeSlogan}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl text-xs md:text-sm font-black uppercase tracking-[0.2em] text-secondary-glow shadow-glow-secondary/10"
+                                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-2xl text-sm md:text-base font-bold tracking-wide text-secondary-glow shadow-glow-secondary/10"
                                 >
-                                    <Sparkles className="w-4 h-4 text-secondary animate-pulse" />
-                                    <span>{slogans[activeSlogan]}</span>
+                                    <Sparkles className="w-5 h-5 text-secondary animate-pulse" />
+                                    <span className="whitespace-nowrap">{slogans[activeSlogan]}</span>
                                 </motion.div>
                             </AnimatePresence>
                         </div>
@@ -87,7 +101,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
                                 {t(heroSlides[activeSlide].titleKey)}
                             </span>
                         </h1>
-                        <p className="text-lg md:text-2xl text-white/70 mb-12 max-w-3xl mx-auto font-medium leading-relaxed tracking-wide line-clamp-3">
+                        <p className="text-lg md:text-2xl text-white/70 mb-12 max-w-3xl mx-auto font-medium leading-relaxed tracking-wide">
                             {t(heroSlides[activeSlide].subtitleKey)}
                         </p>
                         
@@ -102,8 +116,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
                                     <motion.span animate={{ x: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>→</motion.span>
                                 </span>
                             </button>
-                            <button className="px-12 py-5 rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 text-white font-black uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all duration-500 active:scale-95">
-                                {t('actions.joinSignup') || 'Join / Sign Up'}
+                            <button 
+                                onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+                                className="px-12 py-5 rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 text-white font-black uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all duration-500 active:scale-95"
+                            >
+                                {t('actions.whatsHappening') || "What's Happening"}
                             </button>
                         </div>
 
@@ -131,7 +148,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
             </div>
             
             {/* Slide Progress Indicators */}
-            <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 flex gap-4 items-center">
+            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-4 items-center">
                 {heroSlides.map((_, index) => (
                     <button 
                         key={index} 
@@ -149,11 +166,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onBusinessC
                         )}
                     </button>
                 ))}
-            </div>
-
-            {/* Featured Strip at the bottom of Hero */}
-            <div className="absolute bottom-0 left-0 w-full z-30">
-                <FeaturedBusinesses onBusinessClick={onBusinessClick} onSeeAll={onExplore} />
             </div>
         </section>
     );

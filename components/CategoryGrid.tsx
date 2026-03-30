@@ -94,29 +94,36 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick, cur
                                     as="button"
                                     key={category.id}
                                     onClick={() => onCategoryClick(category)}
-                                    className="group relative aspect-[4/5] p-0 hover:shadow-glow-primary hover:scale-105 cursor-pointer overflow-hidden transition-all duration-500"
+                                    className="group relative aspect-[4/5] p-0 hover:shadow-glow-primary hover:scale-105 cursor-pointer overflow-hidden transition-all duration-700 border-white/5"
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     transition={{ delay: index * 0.05 }}
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 opacity-40 group-hover:opacity-100 transition-opacity duration-500" />
-                                    <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/40 transition-all duration-500" />
-                                    
+                                    {/* Background Image with Overlay */}
+                                    <div className="absolute inset-0 z-0">
+                                        <img 
+                                            src={`https://picsum.photos/seed/cat-${category.id}/400/500`} 
+                                            alt="" 
+                                            className="w-full h-full object-cover opacity-20 group-hover:opacity-40 group-hover:scale-110 transition-all duration-1000"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80" />
+                                    </div>
+
                                     <div className="relative z-10 h-full flex flex-col items-center justify-between p-6 text-center">
                                         <div className="mt-4">
-                                            <div className="text-5xl md:text-6xl mb-4 text-white transform group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500 drop-shadow-[0_0_20px_rgba(0,217,255,0.3)]">
+                                            <div className="text-5xl md:text-6xl mb-4 text-white transform group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500 drop-shadow-[0_0_20px_rgba(0,217,255,0.4)]">
                                                 {category.icon}
                                             </div>
                                         </div>
                                         
                                         <div className="mb-2">
-                                            <h3 className="text-white font-bold text-base md:text-lg mb-1 group-hover:text-secondary transition-colors">
+                                            <h3 className="text-white font-black text-base md:text-lg mb-1 group-hover:text-primary transition-colors uppercase tracking-tight">
                                                 {t(category.nameKey)}
                                             </h3>
                                             <div className="flex items-center justify-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-                                                <span className="text-[10px] md:text-xs uppercase tracking-widest text-white/50 font-bold">
-                                                    {category.eventCount} {t('categories.events')}
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                                <span className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-white/50 font-black">
+                                                    {category.eventCount} {t('categories.events') || 'Places'}
                                                 </span>
                                             </div>
                                         </div>
@@ -126,14 +133,14 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onCategoryClick, cur
                                                 initial={{ width: 0 }}
                                                 whileInView={{ width: '100%' }}
                                                 transition={{ duration: 1, delay: 0.5 + (index * 0.1) }}
-                                                className="h-full bg-gradient-to-r from-primary to-secondary opacity-30 group-hover:opacity-100 transition-opacity"
+                                                className="h-full bg-gradient-to-r from-primary via-secondary to-accent opacity-30 group-hover:opacity-100 transition-opacity"
                                             />
                                         </div>
 
                                         {category.recommended && (
-                                            <div className="absolute top-4 right-4 px-2 py-1 rounded-md bg-accent/20 border border-accent/30 backdrop-blur-md flex items-center gap-1">
-                                                <Sparkles className="w-3 h-3 text-accent" />
-                                                <span className="text-[8px] font-black uppercase tracking-tighter text-accent">{t('categories.featured') || 'Hot'}</span>
+                                            <div className="absolute top-4 right-4 px-2 py-1 rounded-md bg-primary/20 border border-primary/30 backdrop-blur-md flex items-center gap-1">
+                                                <Sparkles className="w-3 h-3 text-primary" />
+                                                <span className="text-[8px] font-black uppercase tracking-tighter text-primary">{t('categories.featured') || 'Hot'}</span>
                                             </div>
                                         )}
                                     </div>
